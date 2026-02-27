@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PocketBase Google OAuth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        button {
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>PocketBase Google OAuth Test</h1>
+    <p>PocketBase URL: <strong>http://127.0.0.1:8090</strong></p>
+    <button id="loginBtn" type="button">Sign in with Google</button>
+    <button id="logoutBtn" type="button">Logout</button>
+
+    <h2>Status</h2>
+    <pre id="status">Not authenticated</pre>
+
+    <script type="module">
+        import PocketBase from "https://esm.sh/pocketbase";
+
+        const pb = new PocketBase("http://127.0.0.1:8090");
+        const statusEl = document.getElementById("status");
+        const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        function renderStatus(data) {
+            statusEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        if (pb.authStore.isValid) {
+            renderStatus({
+                message: "Already authenticated",
+                isValid: pb.authStore.isValid,
+                token: pb.authStore.token,
+                record: pb.authStore.record,
+            });
+        }
+
+        loginBtn.addEventListener("click", async () => {
+            try {
+                const authData = await pb.collection("users").authWithOAuth2({
+                    provider: "google",
+                });
+
+                renderStatus({
+                    message: "Login successful",
+                    authData,
+                    isValid: pb.authStore.isValid,
+                    token: pb.authStore.token,
+                    record: pb.authStore.record,
+                });
+            } catch (error) {
+                renderStatus({
+                    message: "Login failed",
+                    error: String(error),
+                });
+            }
+        });
+
+        logoutBtn.addEventListener("click", () => {
+            pb.authStore.clear();
+            renderStatus({
+                message: "Logged out",
+                isValid: pb.authStore.isValid,
+            });
+        });
+    </script>
+</body>
+
+</html>

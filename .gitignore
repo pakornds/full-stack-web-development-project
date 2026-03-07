@@ -34,6 +34,7 @@ database/pb_data/storage/**/thumbs_*/
 backend/pb_data/auxiliary.db
 backend/pb_data/logs/
 backend/pb_data/storage/**/thumbs_*/
+backend/pocketbase.exe
 
 # gitignore
 .gitignore

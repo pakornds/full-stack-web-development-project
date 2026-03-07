@@ -1,4 +1,13 @@
-import { Controller, Get, Req, Res, UseGuards, HttpStatus, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Req,
+  Res,
+  UseGuards,
+  HttpStatus,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
@@ -9,18 +18,24 @@ import { ConfigService } from '@nestjs/config';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private configService: ConfigService
+    private configService: ConfigService,
   ) {}
 
   @Post('google/pocketbase')
-  async googlePocketbaseAuth(@Body() body: PocketbaseOAuthDto, @Res() res: Response) {
+  async googlePocketbaseAuth(
+    @Body() body: PocketbaseOAuthDto,
+    @Res() res: Response,
+  ) {
     const record = body.record;
     if (!record) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Invalid PocketBase record' });
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ message: 'Invalid PocketBase record' });
     }
 
-    const { accessToken, user } = await this.authService.pocketbaseLogin(record);
-    
+    const { accessToken, user } =
+      await this.authService.pocketbaseLogin(record);
+
     // Set cookie
     res.cookie('jwt', accessToken, {
       httpOnly: true,
@@ -29,15 +44,18 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return res.status(HttpStatus.OK).json({ user, message: 'Google OAuth via PocketBase successful' });
+    return res
+      .status(HttpStatus.OK)
+      .json({ user, message: 'Google OAuth via PocketBase successful' });
   }
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt')) // This triggers the JwtStrategy. If the cookie is missing, expired, or tampered with, Passport rejects the request with 401 Unauthorized. If valid, the decoded payload is placed on req.user
   getProfile(@Req() req) {
     return {
       user: req.user,
-      message: 'You are authenticated with high security using JWT and HttpOnly cookies',
+      message:
+        'You are authenticated with high security using JWT and HttpOnly cookies',
     };
   }
 
@@ -48,7 +66,9 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     });
-    return res.status(HttpStatus.OK).json({ message: 'Logged out successfully' });
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: 'Logged out successfully' });
   }
 
   @Post('register')
@@ -56,12 +76,14 @@ export class AuthController {
     const { accessToken, user } = await this.authService.register(body);
 
     res.cookie('jwt', accessToken, {
-      httpOnly: true,
+      httpOnly: true, // JavaScript in the browser cannot read it — only the browser sends it automatically on each request.
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.status(HttpStatus.CREATED).json({ user, message: 'Registered successfully' });
+    return res
+      .status(HttpStatus.CREATED)
+      .json({ user, message: 'Registered successfully' });
   }
 }

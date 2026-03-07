@@ -9,7 +9,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: any) => {
-          let data = request?.cookies?.jwt;
+          const data = request?.cookies?.jwt; // It reads the jwt value from the incoming cookie (made available by cookie-parser in main.ts).
           if (!data) {
             return null;
           }
@@ -22,6 +22,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    return { email: payload.email, name: payload.sub, pocketbaseId: payload.pocketbaseId };
+    return {
+      email: payload.email,
+      name: payload.sub,
+      pocketbaseId: payload.pocketbaseId,
+    };
   }
 }

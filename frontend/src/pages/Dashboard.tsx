@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
         setUserData(user);
       } catch (_err) {
         setError("Unauthorized access. Please login again.");
-        setTimeout(() => navigate("/"), 3000);
+        setTimeout(() => navigate("/login"), 3000);
       }
     };
     fetchUser();
@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       console.error(err);
     }

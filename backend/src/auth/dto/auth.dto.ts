@@ -15,6 +15,16 @@ export class RegisterDto {
   password!: string;
 }
 
+export class LoginDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password!: string;
+}
+
 export class PocketbaseOAuthDto {
   @IsNotEmpty()
   record!: any;

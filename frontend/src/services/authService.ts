@@ -3,6 +3,11 @@ import PocketBase from "pocketbase";
 
 const pb = new PocketBase("http://127.0.0.1:8090");
 
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
 export interface RegisterFormData {
   name: string;
   email: string;
@@ -12,17 +17,16 @@ export interface RegisterFormData {
 export interface UserData {
   name: string;
   email: string;
+  role?: string;
   [key: string]: unknown;
 }
 
-export const registerUser = async (
-  formData: RegisterFormData,
-): Promise<UserData> => {
-  const response = await api.post<UserData>("/auth/register", formData);
+export const loginUser = async (formData: LoginFormData): Promise<UserData> => {
+  const response = await api.post<UserData>("/auth/login", formData);
   return response.data;
 };
 
-export const registerWithGoogle = async (): Promise<UserData> => {
+export const loginWithGoogle = async (): Promise<UserData> => {
   const authData = await pb.collection("users").authWithOAuth2({
     provider: "google",
     createData: { role: "user" },
@@ -33,6 +37,15 @@ export const registerWithGoogle = async (): Promise<UserData> => {
   });
   return response.data;
 };
+
+export const registerUser = async (
+  formData: RegisterFormData,
+): Promise<UserData> => {
+  const response = await api.post<UserData>("/auth/register", formData);
+  return response.data;
+};
+
+export const registerWithGoogle = loginWithGoogle;
 
 export const getDashboardData = async (): Promise<UserData> => {
   const response = await api.get<{ user: UserData }>("/auth/me");

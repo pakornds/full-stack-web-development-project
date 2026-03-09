@@ -2,19 +2,20 @@ import {
   Injectable,
   InternalServerErrorException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import PocketBase from 'pocketbase';
 
-import { RegisterDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
   private pb: PocketBase;
 
   constructor(
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
     private configService: ConfigService,
   ) {
     this.pb = new PocketBase(
@@ -41,10 +42,12 @@ export class AuthService {
     }
 
     try {
+      const role: string = record.role || 'user';
       const payload = {
         email: record.email,
         sub: record.name,
         pocketbaseId: record.id,
+        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -52,6 +55,7 @@ export class AuthService {
           id: record.id,
           email: record.email,
           name: record.name,
+          role,
         },
       };
     } catch (err) {
@@ -75,10 +79,12 @@ export class AuthService {
         emailVisibility: true,
       });
 
+      const role: string = (pbUser as any).role || 'user';
       const payload = {
         email: pbUser.email,
         sub: pbUser.name,
         pocketbaseId: pbUser.id,
+        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -86,6 +92,7 @@ export class AuthService {
           id: pbUser.id,
           email: pbUser.email,
           name: pbUser.name,
+          role,
         },
       };
     } catch (err: any) {
@@ -94,6 +101,39 @@ export class AuthService {
         err?.response?.message ||
           'Failed to register user. Email might be in use.',
       );
+    }
+  }
+
+  async login(loginDto: LoginDto) {
+    try {
+      const authData = await this.pb
+        .collection('users')
+        .authWithPassword(loginDto.email, loginDto.password);
+
+      const pbUser = authData.record;
+      const role: string = (pbUser as any).role || 'user';
+
+      const payload = {
+        email: pbUser.email,
+        sub: pbUser.name,
+        pocketbaseId: pbUser.id,
+        role,
+      };
+      return {
+        accessToken: this.jwtService.sign(payload),
+        user: {
+          id: pbUser.id,
+          email: pbUser.email,
+          name: pbUser.name,
+          role,
+        },
+      };
+    } catch (err: any) {
+      console.error(err);
+      if (err?.status === 400 || err?.response?.code === 400) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+      throw new UnauthorizedException('Login failed. Please try again.');
     }
   }
 }

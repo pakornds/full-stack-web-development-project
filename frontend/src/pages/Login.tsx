@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  registerUser,
-  registerWithGoogle,
-  RegisterFormData,
+  loginUser,
+  loginWithGoogle,
+  LoginFormData,
 } from "../services/authService";
 
-const Register: React.FC = () => {
+const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegisterFormData>({
-    name: "",
+  const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
@@ -18,13 +17,13 @@ const Register: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      await registerWithGoogle();
+      await loginWithGoogle();
       navigate("/dashboard");
     } catch (err) {
       console.error("OAuth Error:", err);
       const message =
         err instanceof Error ? err.message : "Window closed or access denied";
-      setError(`Google OAuth failed: ${message}`);
+      setError(`Google login failed: ${message}`);
     }
   };
 
@@ -32,18 +31,18 @@ const Register: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await registerUser(formData);
+      await loginUser(formData);
       navigate("/dashboard");
     } catch (err) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(
         axiosError.response?.data?.message ??
-          "Registration failed. Please try again.",
+          "Login failed. Please check your credentials.",
       );
     } finally {
       setLoading(false);
@@ -53,8 +52,8 @@ const Register: React.FC = () => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Create an Account</h1>
-        <p>Register to access your secure dashboard.</p>
+        <h1>Welcome Back</h1>
+        <p>Sign in to access your secure dashboard.</p>
 
         {error && (
           <p className="error-text" style={{ marginBottom: "15px" }}>
@@ -62,15 +61,24 @@ const Register: React.FC = () => {
           </p>
         )}
 
-        <form onSubmit={handleRegister} className="register-form">
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
+        <button
+          onClick={handleGoogleLogin}
+          type="button"
+          className="google-btn"
+          style={{ marginBottom: "20px" }}
+        >
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+            alt="Google Logo"
           />
+          Continue with Google
+        </button>
+
+        <div className="divider">
+          <span>OR</span>
+        </div>
+
+        <form onSubmit={handleLogin} className="register-form">
           <input
             type="email"
             name="email"
@@ -82,31 +90,15 @@ const Register: React.FC = () => {
           <input
             type="password"
             name="password"
-            placeholder="Secure Password"
+            placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
           />
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Register"}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
-
-        <div className="divider">
-          <span>OR</span>
-        </div>
-
-        <button
-          onClick={handleGoogleLogin}
-          type="button"
-          className="google-btn"
-        >
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-            alt="Google Logo"
-          />
-          Register with Google
-        </button>
 
         <p
           style={{
@@ -115,16 +107,16 @@ const Register: React.FC = () => {
             fontSize: "14px",
           }}
         >
-          Already have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
-            to="/login"
+            to="/register"
             style={{
               color: "var(--primary)",
               textDecoration: "none",
               fontWeight: 600,
             }}
           >
-            Sign in
+            Create one
           </Link>
         </p>
       </div>
@@ -132,4 +124,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default Login;

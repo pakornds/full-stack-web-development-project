@@ -11,7 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
-import { RegisterDto, PocketbaseOAuthDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, PocketbaseOAuthDto } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
@@ -69,6 +69,22 @@ export class AuthController {
     return res
       .status(HttpStatus.OK)
       .json({ message: 'Logged out successfully' });
+  }
+
+  @Post('login')
+  async login(@Body() body: LoginDto, @Res() res: Response) {
+    const { accessToken, user } = await this.authService.login(body);
+
+    res.cookie('jwt', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res
+      .status(HttpStatus.OK)
+      .json({ user, message: 'Logged in successfully' });
   }
 
   @Post('register')

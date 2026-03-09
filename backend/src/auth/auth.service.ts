@@ -44,6 +44,7 @@ export class AuthService {
       const payload = {
         email: record.email,
         sub: record.name,
+        role: record.role,
         pocketbaseId: record.id,
       };
       return {
@@ -52,6 +53,7 @@ export class AuthService {
           id: record.id,
           email: record.email,
           name: record.name,
+          role: record.role,
         },
       };
     } catch (err) {
@@ -78,14 +80,16 @@ export class AuthService {
       const payload = {
         email: pbUser.email,
         sub: pbUser.name,
+        role: pbUser.role,
         pocketbaseId: pbUser.id,
       };
       return {
         accessToken: this.jwtService.sign(payload),
         user: {
           id: pbUser.id,
-          email: pbUser.email,
+          email: pbUser.email,  
           name: pbUser.name,
+          role: pbUser.role,
         },
       };
     } catch (err: any) {

@@ -48,7 +48,6 @@ export class AuthService {
         sub: record.name,
         role: record.role,
         pocketbaseId: record.id,
-        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -86,7 +85,6 @@ export class AuthService {
         sub: pbUser.name,
         role: pbUser.role,
         pocketbaseId: pbUser.id,
-        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -119,7 +117,7 @@ export class AuthService {
         email: pbUser.email,
         sub: pbUser.name,
         pocketbaseId: pbUser.id,
-        role,
+        role: pbUser.role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -127,7 +125,7 @@ export class AuthService {
           id: pbUser.id,
           email: pbUser.email,
           name: pbUser.name,
-          role,
+          role: pbUser.role,
         },
       };
     } catch (err: any) {

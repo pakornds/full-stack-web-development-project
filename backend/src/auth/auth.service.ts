@@ -3,11 +3,13 @@ import {
   InternalServerErrorException,
   BadRequestException,
   UnauthorizedException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import PocketBase from 'pocketbase';
 
+import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
@@ -15,6 +17,7 @@ export class AuthService {
   private pb: PocketBase;
 
   constructor(
+    private readonly jwtService: JwtService,
     private readonly jwtService: JwtService,
     private configService: ConfigService,
   ) {
@@ -43,11 +46,13 @@ export class AuthService {
 
     try {
       const role: string = record.role || 'user';
+      const role: string = record.role || 'user';
       const payload = {
         email: record.email,
         sub: record.name,
         role: record.role,
         pocketbaseId: record.id,
+        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),
@@ -80,11 +85,13 @@ export class AuthService {
       });
 
       const role: string = (pbUser as any).role || 'user';
+      const role: string = (pbUser as any).role || 'user';
       const payload = {
         email: pbUser.email,
         sub: pbUser.name,
         role: pbUser.role,
         pocketbaseId: pbUser.id,
+        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),

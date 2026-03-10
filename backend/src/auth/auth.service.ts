@@ -85,6 +85,7 @@ export class AuthService {
         sub: pbUser.name,
         role: pbUser.role,
         pocketbaseId: pbUser.id,
+        role,
       };
       return {
         accessToken: this.jwtService.sign(payload),

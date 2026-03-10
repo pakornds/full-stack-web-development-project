@@ -105,6 +105,10 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
+    // main branch: security audit log
+    console.log(
+      `[main] Security audit - login request received for: ${loginDto.email}`,
+    );
     try {
       const authData = await this.pb
         .collection('users')

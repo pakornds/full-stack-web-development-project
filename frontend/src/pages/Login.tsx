@@ -21,8 +21,17 @@ const Login: React.FC = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("OAuth Error:", err);
-      const message =
-        err instanceof Error ? err.message : "Window closed or access denied";
+      let message = "Window closed or access denied";
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        typeof (err as { message: unknown }).message === "string"
+      ) {
+        message = (err as { message: string }).message;
+      }
       setError(`Google login failed: ${message}`);
     }
   };

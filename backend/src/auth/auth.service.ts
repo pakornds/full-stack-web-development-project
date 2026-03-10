@@ -25,10 +25,14 @@ export class AuthService {
 
   private async getAdminAuth() {
     try {
-      await this.pb.admins.authWithPassword(
-        this.configService.get<string>('PB_ADMIN_EMAIL') || 'admin@example.com',
-        this.configService.get<string>('PB_ADMIN_PASSWORD') || 'adminpassword',
-      );
+      await this.pb
+        .collection('_superusers')
+        .authWithPassword(
+          this.configService.get<string>('PB_ADMIN_EMAIL') ||
+            'admin@example.com',
+          this.configService.get<string>('PB_ADMIN_PASSWORD') ||
+            'adminpassword',
+        );
     } catch (err) {
       console.warn(
         'Could not authenticate PB admin. Make sure PB_ADMIN_EMAIL/PASSWORD are correct and the admin is created.',
@@ -46,7 +50,7 @@ export class AuthService {
       const payload = {
         email: record.email,
         sub: record.name,
-        role: record.role,
+        role,
         pocketbaseId: record.id,
       };
       return {
@@ -97,6 +101,16 @@ export class AuthService {
       };
     } catch (err: any) {
       console.error(err);
+      const fieldErrors = err?.response?.data;
+      if (fieldErrors && typeof fieldErrors === 'object') {
+        const messages = Object.entries(fieldErrors)
+          .map(
+            ([field, detail]: [string, any]) =>
+              `${field}: ${detail?.message ?? detail}`,
+          )
+          .join('; ');
+        throw new BadRequestException(messages);
+      }
       throw new BadRequestException(
         err?.response?.message ||
           'Failed to register user. Email might be in use.',

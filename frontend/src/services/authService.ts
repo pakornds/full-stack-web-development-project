@@ -27,6 +27,7 @@ export const loginUser = async (formData: LoginFormData): Promise<UserData> => {
 };
 
 export const loginWithGoogle = async (): Promise<UserData> => {
+  pb.authStore.clear(); // fix bug
   const authData = await pb.collection("users").authWithOAuth2({
     provider: "google",
     createData: { role: "user" },

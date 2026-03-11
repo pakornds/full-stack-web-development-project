@@ -12,11 +12,11 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
-  private pb: PocketBase;
+  private readonly pb: PocketBase;
 
   constructor(
     private readonly jwtService: JwtService,
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
   ) {
     this.pb = new PocketBase(
       this.configService.get<string>('PB_URL') || 'http://127.0.0.1:8090',

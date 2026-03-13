@@ -51,7 +51,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard('jwt')) // This triggers the JwtStrategy. If the cookie is missing, expired, or tampered with, Passport rejects the request with 401 Unauthorized. If valid, the decoded payload is placed on req.user
-  getProfile(@Req() req: Request) {
+  getProfile(@Req() req: any) {
     return {
       user: req.user,
       message:

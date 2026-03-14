@@ -1,21 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+/* define variables */
 :root {
-  --primary: #4F46E5;
-  --primary-hover: #4338CA;
-  --bg-color: #0F172A;
-  --card-bg: #1E293B;
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
-  --danger: #EF4444;
-  --success: #10B981;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #10b981;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 body {
@@ -27,7 +28,8 @@ body {
   align-items: center;
 }
 
-.login-container, .dashboard-container {
+.login-container,
+.dashboard-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -35,7 +37,8 @@ body {
   padding: 20px;
 }
 
-.login-card, .dashboard-card {
+.login-card,
+.dashboard-card {
   background: var(--card-bg);
   padding: 40px;
   border-radius: 16px;
@@ -49,7 +52,7 @@ body {
 .login-card h1 {
   font-size: 28px;
   margin-bottom: 10px;
-  background: linear-gradient(135deg, #A78BFA, #4F46E5);
+  background: linear-gradient(135deg, #a78bfa, #4f46e5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -73,7 +76,9 @@ body {
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .google-btn img {
@@ -140,8 +145,9 @@ body {
   font-size: 14px;
 }
 
-.divider::before, .divider::after {
-  content: '';
+.divider::before,
+.divider::after {
+  content: "";
   flex: 1;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -166,7 +172,7 @@ body {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10B981, #059669);
+  background: linear-gradient(135deg, #10b981, #059669);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,4 +211,108 @@ body {
 .error-text {
   color: var(--danger);
   font-weight: 500;
+}
+
+.login-error-box {
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  margin-bottom: 15px;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Role badge */
+.role-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.admin-badge {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.dev-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+}
+
+.user-badge {
+  background: rgba(79, 70, 229, 0.15);
+  color: #818cf8;
+  border: 1px solid #818cf8;
+}
+
+/* Role-specific card borders */
+.role-admin {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.role-dev {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.role-user {
+  border-color: rgba(79, 70, 229, 0.3);
+}
+
+/* Role-specific avatars */
+.avatar-admin {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.avatar-dev {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.avatar-user {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+/* Permissions box */
+.permissions-box {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: left;
+}
+
+.permissions-box h4 {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.permissions-box p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.permission-item {
+  list-style: none;
+  font-size: 14px;
+  color: var(--text-main);
+  padding: 3px 0;
+}
+
+.text-muted {
+  color: var(--text-muted);
+  font-size: 14px;
 }

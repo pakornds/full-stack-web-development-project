@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 import {
   loginUser,
   loginWithGoogle,
@@ -48,11 +49,18 @@ const Login: React.FC = () => {
       await loginUser(formData);
       navigate("/dashboard");
     } catch (err) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      setError(
-        axiosError.response?.data?.message ??
-          "Login failed. Please check your credentials.",
-      );
+      if (axios.isAxiosError(err)) {
+        const responseMessage = err.response?.data?.message;
+        if (Array.isArray(responseMessage)) {
+          setError(responseMessage.join(", "));
+        } else if (typeof responseMessage === "string") {
+          setError(responseMessage);
+        } else {
+          setError("Invalid email or password.");
+        }
+      } else {
+        setError("Invalid email or password.");
+      }
     } finally {
       setLoading(false);
     }
@@ -64,11 +72,7 @@ const Login: React.FC = () => {
         <h1>Welcome Back</h1>
         <p>Sign in to access your secure dashboard.</p>
 
-        {error && (
-          <p className="error-text" style={{ marginBottom: "15px" }}>
-            {error}
-          </p>
-        )}
+        {error && <div className="login-error-box">{error}</div>}
 
         <button
           onClick={handleGoogleLogin}

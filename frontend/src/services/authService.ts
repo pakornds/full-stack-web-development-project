@@ -21,6 +21,18 @@ export interface UserData {
   [key: string]: unknown;
 }
 
+export interface DashboardData {
+  user: UserData;
+  stats: {
+    description?: string;
+    permissions: string[];
+    apiUptime?: string;
+    nodeVersion?: string;
+    environment?: string;
+  };
+  message: string;
+}
+
 export const loginUser = async (formData: LoginFormData): Promise<UserData> => {
   const response = await api.post<UserData>("/auth/login", formData);
   return response.data;
@@ -51,6 +63,21 @@ export const registerWithGoogle = loginWithGoogle;
 export const getDashboardData = async (): Promise<UserData> => {
   const response = await api.get<{ user: UserData }>("/auth/me");
   return response.data.user;
+};
+
+export const getAdminDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/admin");
+  return response.data;
+};
+
+export const getDevDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/dev");
+  return response.data;
+};
+
+export const getUserDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/user");
+  return response.data;
 };
 
 export const logoutUser = async (): Promise<unknown> => {

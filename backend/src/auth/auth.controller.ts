@@ -182,11 +182,8 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() body: LoginDto, @Res() res: Response) {
-    const {
-      accessToken,
-      refreshToken,
-      user,
-    } = await this.authService.login(body);
+    const { accessToken, refreshToken, user } =
+      await this.authService.login(body);
 
     this.setAuthCookies(res, accessToken, refreshToken);
 
@@ -206,8 +203,11 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token missing');
     }
 
-    const { accessToken, refreshToken: nextRefreshToken, user } =
-      await this.authService.refresh(refreshToken);
+    const {
+      accessToken,
+      refreshToken: nextRefreshToken,
+      user,
+    } = await this.authService.refresh(refreshToken);
 
     this.setAuthCookies(res, accessToken, nextRefreshToken);
 
@@ -218,11 +218,8 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() body: RegisterDto, @Res() res: Response) {
-    const {
-      accessToken,
-      refreshToken,
-      user,
-    } = await this.authService.register(body);
+    const { accessToken, refreshToken, user } =
+      await this.authService.register(body);
 
     this.setAuthCookies(res, accessToken, refreshToken);
 

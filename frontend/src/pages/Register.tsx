@@ -49,11 +49,16 @@ const Register: React.FC = () => {
       await registerUser(formData);
       navigate("/dashboard");
     } catch (err) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
-      setError(
-        axiosError.response?.data?.message ??
-          "Registration failed. Please try again.",
-      );
+      const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+      const errorMessage = axiosError.response?.data?.message;
+      
+      if (Array.isArray(errorMessage)) {
+        setError(errorMessage.join(" | "));
+      } else {
+        setError(
+          errorMessage ?? "Registration failed. Please try again.",
+        );
+      }
     } finally {
       setLoading(false);
     }

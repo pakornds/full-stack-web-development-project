@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  getUserDashboardData,
+  getManagerDashboardData,
   logoutUser,
   DashboardData,
 } from "../services/authService";
 
-const UserDashboard: React.FC = () => {
+const ManagerDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    getUserDashboardData()
+    getManagerDashboardData()
       .then(setData)
       .catch(() => {
         setError("Access denied or session expired.");
@@ -31,10 +31,10 @@ const UserDashboard: React.FC = () => {
 
   const renderContent = () => {
     if (error) return <p className="error-text">{error}</p>;
-    if (!data) return <p>Loading your data...</p>;
+    if (!data) return <p>Loading manager data...</p>;
     return (
       <div className="user-info">
-        <div className="avatar avatar-user">
+        <div className="avatar avatar-manager">
           {String(data.user.name)?.[0]?.toUpperCase()}
         </div>
         <h3>Hello, {data.user.name}!</h3>
@@ -50,6 +50,12 @@ const UserDashboard: React.FC = () => {
             ))}
           </ul>
         </div>
+        <div className="permissions-box" style={{ marginTop: "12px" }}>
+          <h4>System Info</h4>
+          <p>API Uptime: {data.stats.apiUptime}</p>
+          <p>Node: {data.stats.nodeVersion}</p>
+          <p>Env: {data.stats.environment}</p>
+        </div>
         <button onClick={handleLogout} className="logout-btn">
           Logout
         </button>
@@ -59,13 +65,13 @@ const UserDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-card role-user">
-        <div className="role-badge user-badge">USER</div>
-        <h2>Dashboard</h2>
+      <div className="dashboard-card role-manager">
+        <div className="role-badge manager-badge">MANAGER</div>
+        <h2>Manager Dashboard</h2>
         {renderContent()}
       </div>
     </div>
   );
 };
 
-export default UserDashboard;
+export default ManagerDashboard;

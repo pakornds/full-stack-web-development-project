@@ -135,27 +135,27 @@ export class AuthController {
     };
   }
 
-  @Get('dashboard/dev')
+  @Get('dashboard/manager')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('dev')
-  getDevDashboard(@Req() req: AuthenticatedRequest) {
+  @Roles('manager')
+  getManagerDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
       stats: {
-        description: 'Developer access',
+        description: 'Manager access',
         permissions: ['view_logs', 'api_access', 'debug_mode'],
         apiUptime: process.uptime().toFixed(2) + 's',
         nodeVersion: process.version,
         environment: process.env.NODE_ENV || 'development',
       },
-      message: 'Welcome to the Developer Dashboard',
+      message: 'Welcome to the Manager Dashboard',
     };
   }
 
-  @Get('dashboard/user')
+  @Get('dashboard/employee')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('user')
-  getUserDashboard(@Req() req: AuthenticatedRequest) {
+  @Roles('employee')
+  getEmployeeDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
       stats: {

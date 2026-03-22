@@ -99,7 +99,9 @@ export class AuthService {
   }
 
   private getAccessTokenTtl() {
-    return this.configService.get<number>('ACCESS_TOKEN_TTL_SECONDS') ?? 15 * 60;
+    return (
+      this.configService.get<number>('ACCESS_TOKEN_TTL_SECONDS') ?? 15 * 60
+    );
   }
 
   private getRefreshTokenTtl() {
@@ -124,7 +126,7 @@ export class AuthService {
       email: user.email,
       sub: user.name,
       pocketbaseId: user.id,
-      role: user.role || 'user',
+      role: user.role || 'employee',
       sessionId,
     };
   }
@@ -187,7 +189,9 @@ export class AuthService {
 
   private async getUserById(adminPb: PocketBase, userId: string) {
     try {
-      return await adminPb.collection('users').getOne<PocketBaseUserRecord>(userId);
+      return await adminPb
+        .collection('users')
+        .getOne<PocketBaseUserRecord>(userId);
     } catch (err: any) {
       if (err?.status === 404 || err?.response?.code === 404) {
         return null;
@@ -309,7 +313,7 @@ export class AuthService {
         name: userDto.name,
         password: userDto.password,
         passwordConfirm: userDto.password,
-        role: 'user', // Required by database migration
+        role: 'employee', // Required by database migration
         failedLoginAttempts: 0,
         lockedUntil: null,
         emailVisibility: true,

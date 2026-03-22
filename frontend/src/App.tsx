@@ -4,8 +4,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import DevDashboard from "./pages/DevDashboard";
-import UserDashboard from "./pages/UserDashboard";
+import ManagerDashboard from "./pages/ManagerDashboard";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 
 function App(): React.JSX.Element {
   return (
@@ -16,8 +16,8 @@ function App(): React.JSX.Element {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
-        <Route path="/dashboard/dev" element={<DevDashboard />} />
-        <Route path="/dashboard/user" element={<UserDashboard />} />
+        <Route path="/dashboard/manager" element={<ManagerDashboard />} />
+        <Route path="/dashboard/employee" element={<EmployeeDashboard />} />
       </Routes>
     </BrowserRouter>
   );

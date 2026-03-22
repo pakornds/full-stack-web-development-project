@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  getDevDashboardData,
+  getEmployeeDashboardData,
   logoutUser,
   DashboardData,
 } from "../services/authService";
 
-const DevDashboard: React.FC = () => {
+const EmployeeDashboard: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    getDevDashboardData()
+    getEmployeeDashboardData()
       .then(setData)
       .catch(() => {
         setError("Access denied or session expired.");
@@ -31,10 +31,10 @@ const DevDashboard: React.FC = () => {
 
   const renderContent = () => {
     if (error) return <p className="error-text">{error}</p>;
-    if (!data) return <p>Loading developer data...</p>;
+    if (!data) return <p>Loading your data...</p>;
     return (
-      <div className="user-info">
-        <div className="avatar avatar-dev">
+      <div className="EMPLOYEE-info">
+        <div className="avatar avatar-employee">
           {String(data.user.name)?.[0]?.toUpperCase()}
         </div>
         <h3>Hello, {data.user.name}!</h3>
@@ -50,12 +50,6 @@ const DevDashboard: React.FC = () => {
             ))}
           </ul>
         </div>
-        <div className="permissions-box" style={{ marginTop: "12px" }}>
-          <h4>System Info</h4>
-          <p>API Uptime: {data.stats.apiUptime}</p>
-          <p>Node: {data.stats.nodeVersion}</p>
-          <p>Env: {data.stats.environment}</p>
-        </div>
         <button onClick={handleLogout} className="logout-btn">
           Logout
         </button>
@@ -65,13 +59,13 @@ const DevDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-card role-dev">
-        <div className="role-badge dev-badge">DEV</div>
-        <h2>Developer Dashboard</h2>
+      <div className="dashboard-card role-employee">
+        <div className="role-badge employee-badge">EMPLOYEE</div>
+        <h2>Dashboard</h2>
         {renderContent()}
       </div>
     </div>
   );
 };
 
-export default DevDashboard;
+export default EmployeeDashboard;

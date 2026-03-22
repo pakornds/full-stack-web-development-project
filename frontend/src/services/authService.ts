@@ -42,7 +42,7 @@ export const loginWithGoogle = async (): Promise<UserData> => {
   pb.authStore.clear(); // fix bug
   const authData = await pb.collection("users").authWithOAuth2({
     provider: "google",
-    createData: { role: "user" },
+    createData: { role: "employee" },
   });
 
   const response = await api.post<UserData>("/auth/google/pocketbase", {
@@ -70,13 +70,13 @@ export const getAdminDashboardData = async (): Promise<DashboardData> => {
   return response.data;
 };
 
-export const getDevDashboardData = async (): Promise<DashboardData> => {
-  const response = await api.get<DashboardData>("/auth/dashboard/dev");
+export const getManagerDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/manager");
   return response.data;
 };
 
-export const getUserDashboardData = async (): Promise<DashboardData> => {
-  const response = await api.get<DashboardData>("/auth/dashboard/user");
+export const getEmployeeDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/employee");
   return response.data;
 };
 

@@ -4,11 +4,25 @@ services:
       context: ./backend
       dockerfile: pocketbase.Dockerfile
     container_name: fsd-pocketbase
+    env_file:
+      - ./backend/.env
     ports:
       - "8090:8090"
     volumes:
       - ./backend/pb_data:/pb/pb_data
       - ./backend/pb_migrations:/pb/pb_migrations
+    command:
+      [
+        "/bin/sh",
+        "-ec",
+        '/pb/pocketbase superuser upsert "$$PB_ADMIN_EMAIL" "$$PB_ADMIN_PASSWORD" --dir=/pb/pb_data; exec /pb/pocketbase serve --http=0.0.0.0:8090 --dir=/pb/pb_data',
+      ]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     restart: unless-stopped
     networks:
       - app-network
@@ -20,16 +34,14 @@ services:
     container_name: fsd-backend
     ports:
       - "3000:3000"
+    env_file:
+      - ./backend/.env
     environment:
       PORT: 3000
-      FRONTEND_URL: http://localhost:5173
       PB_URL: http://pocketbase:8090
-      PB_ADMIN_EMAIL: admin@example.com
-      PB_ADMIN_PASSWORD: adminpassword
-      JWT_SECRET: change-me
-      REFRESH_TOKEN_HASH_SECRET: change-me-too
     depends_on:
-      - pocketbase
+      pocketbase:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
@@ -47,43 +59,43 @@ services:
     networks:
       - app-network
 
-  sonarqube-db:
-    image: postgres:16-alpine
-    container_name: fsd-sonarqube-db
-    environment:
-      POSTGRES_USER: sonar
-      POSTGRES_PASSWORD: sonar
-      POSTGRES_DB: sonarqube
-    volumes:
-      - sonarqube_db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-    networks:
-      - app-network
+  # sonarqube-db:
+  #   image: postgres:16-alpine
+  #   container_name: fsd-sonarqube-db
+  #   environment:
+  #     POSTGRES_USER: sonar
+  #     POSTGRES_PASSWORD: sonar
+  #     POSTGRES_DB: sonarqube
+  #   volumes:
+  #     - sonarqube_db:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #   restart: unless-stopped
+  #   networks:
+  #     - app-network
 
-  sonarqube:
-    image: sonarqube:lts-community
-    container_name: fsd-sonarqube
-    depends_on:
-      sonarqube-db:
-        condition: service_healthy
-    ports:
-      - "9001:9000"
-    environment:
-      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
-      SONAR_JDBC_USERNAME: sonar
-      SONAR_JDBC_PASSWORD: sonar
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-    restart: unless-stopped
-    networks:
-      - app-network
+  # sonarqube:
+  #   image: sonarqube:lts-community
+  #   container_name: fsd-sonarqube
+  #   depends_on:
+  #     sonarqube-db:
+  #       condition: service_healthy
+  #   ports:
+  #     - "9001:9000"
+  #   environment:
+  #     SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+  #     SONAR_JDBC_USERNAME: sonar
+  #     SONAR_JDBC_PASSWORD: sonar
+  #   volumes:
+  #     - sonarqube_data:/opt/sonarqube/data
+  #     - sonarqube_extensions:/opt/sonarqube/extensions
+  #     - sonarqube_logs:/opt/sonarqube/logs
+  #   restart: unless-stopped
+  #   networks:
+  #     - app-network
 
 networks:
   app-network:

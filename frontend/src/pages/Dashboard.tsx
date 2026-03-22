@@ -11,8 +11,8 @@ const Dashboard: React.FC = () => {
         const user = await getDashboardData();
         const role = user.role;
         if (role === "admin") navigate("/dashboard/admin", { replace: true });
-        else if (role === "dev") navigate("/dashboard/dev", { replace: true });
-        else navigate("/dashboard/user", { replace: true });
+        else if (role === "manager") navigate("/dashboard/manager", { replace: true });
+        else navigate("/dashboard/employee", { replace: true });
       } catch (_err) {
         navigate("/login", { replace: true });
       }

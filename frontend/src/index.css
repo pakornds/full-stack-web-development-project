@@ -243,13 +243,13 @@ body {
   border: 1px solid #ef4444;
 }
 
-.dev-badge {
+.manager-badge {
   background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
   border: 1px solid #f59e0b;
 }
 
-.user-badge {
+.employee-badge {
   background: rgba(79, 70, 229, 0.15);
   color: #818cf8;
   border: 1px solid #818cf8;
@@ -260,11 +260,11 @@ body {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-.role-dev {
+.role-manager {
   border-color: rgba(245, 158, 11, 0.3);
 }
 
-.role-user {
+.role-employee {
   border-color: rgba(79, 70, 229, 0.3);
 }
 
@@ -273,11 +273,11 @@ body {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
-.avatar-dev {
+.avatar-manager {
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.avatar-user {
+.avatar-employee {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
 }
 

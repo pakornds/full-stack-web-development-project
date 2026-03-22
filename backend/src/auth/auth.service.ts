@@ -289,7 +289,7 @@ export class AuthService {
 
     try {
       const adminPb = await this.getAdminClient();
-      const role: string = record.role || 'user';
+      const role: string = record.role || 'employee';
       return this.issueAuthTokens(adminPb, {
         id: record.id,
         email: record.email,
@@ -319,7 +319,7 @@ export class AuthService {
         emailVisibility: true,
       });
 
-      const role: string = (pbUser as any).role || 'user';
+      const role: string = (pbUser as any).role || 'employee';
       return this.issueAuthTokens(adminPb, {
         id: pbUser.id,
         email: pbUser.email,
@@ -382,7 +382,7 @@ export class AuthService {
         await this.resetFailedLoginAttempts(adminPb, userRecord.id);
       }
 
-      const role: string = (pbUser as any).role || 'user';
+      const role: string = (pbUser as any).role || 'employee';
       return this.issueAuthTokens(adminPb, {
         id: pbUser.id,
         email: pbUser.email,
@@ -510,7 +510,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       pocketbaseId: user.id,
-      role: user.role || 'user',
+      role: user.role || 'employee',
       sessionId: user.currentSessionId,
     };
   }

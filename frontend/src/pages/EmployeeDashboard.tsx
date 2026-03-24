@@ -33,7 +33,7 @@ const EmployeeDashboard: React.FC = () => {
     if (error) return <p className="error-text">{error}</p>;
     if (!data) return <p>Loading your data...</p>;
     return (
-      <div className="EMPLOYEE-info">
+      <div className="user-info">
         <div className="avatar avatar-employee">
           {String(data.user.name)?.[0]?.toUpperCase()}
         </div>

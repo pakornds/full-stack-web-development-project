@@ -2,14 +2,15 @@
 
 /* define variables */
 :root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --bg-color: #0f172a;
-  --card-bg: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-color: #f3f4f6;
+  --card-bg: #ffffff;
+  --text-main: #111827;
+  --text-muted: #6b7280;
   --danger: #ef4444;
   --success: #10b981;
+  --border-color: #e5e7eb;
 }
 
 * {
@@ -41,20 +42,18 @@ body {
 .dashboard-card {
   background: var(--card-bg);
   padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   text-align: center;
   width: 100%;
   max-width: 400px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .login-card h1 {
   font-size: 28px;
   margin-bottom: 10px;
-  background: linear-gradient(135deg, #a78bfa, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-main);
 }
 
 .login-card p {
@@ -69,16 +68,14 @@ body {
   gap: 12px;
   width: 100%;
   background-color: #ffffff;
-  color: #333333;
-  border: none;
+  color: #374151;
+  border: 1px solid var(--border-color);
   padding: 14px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  transition: background-color 0.2s;
 }
 
 .google-btn img {
@@ -87,8 +84,7 @@ body {
 }
 
 .google-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  background-color: #f9fafb;
 }
 
 .register-form {
@@ -101,18 +97,17 @@ body {
 .register-form input {
   padding: 12px 15px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  background: #ffffff;
   color: var(--text-main);
   font-size: 14px;
   outline: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .register-form input:focus {
   border-color: var(--primary);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .submit-btn {
@@ -121,10 +116,10 @@ body {
   border: none;
   padding: 14px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.2s;
 }
 
 .submit-btn:hover {
@@ -132,7 +127,7 @@ body {
 }
 
 .submit-btn:disabled {
-  background: #334155;
+  background: #9ca3af;
   cursor: not-allowed;
 }
 
@@ -149,7 +144,7 @@ body {
 .divider::after {
   content: "";
   flex: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .divider span {
@@ -159,6 +154,7 @@ body {
 .dashboard-card h2 {
   font-size: 24px;
   margin-bottom: 20px;
+  color: var(--text-main);
 }
 
 .user-info {
@@ -172,12 +168,12 @@ body {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 600;
   color: white;
   margin-bottom: 10px;
 }
@@ -186,20 +182,20 @@ body {
   background: rgba(16, 185, 129, 0.1);
   color: var(--success);
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
 }
 
 .logout-btn {
   margin-top: 20px;
-  padding: 12px 24px;
-  background-color: transparent;
+  padding: 10px 20px;
+  background-color: #ffffff;
   color: var(--danger);
   border: 1px solid var(--danger);
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.2s;
 }
 
@@ -214,7 +210,7 @@ body {
 }
 
 .login-error-box {
-  border: 1px solid var(--danger);
+  border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 10px 14px;
   color: var(--danger);
@@ -222,71 +218,55 @@ body {
   font-weight: 500;
   text-align: left;
   margin-bottom: 15px;
-  background: rgba(239, 68, 68, 0.08);
+  background: #fef2f2;
 }
 
 /* Role badge */
 .role-badge {
   display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
+  padding: 4px 12px;
+  border-radius: 6px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   margin-bottom: 12px;
 }
 
 .admin-badge {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid #ef4444;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
 }
 
 .manager-badge {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
 }
 
 .employee-badge {
-  background: rgba(79, 70, 229, 0.15);
-  color: #818cf8;
-  border: 1px solid #818cf8;
+  background: #e0e7ff;
+  color: #4f46e5;
+  border: 1px solid #c7d2fe;
 }
 
 /* Role-specific card borders */
-.role-admin {
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.role-manager {
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.role-employee {
-  border-color: rgba(79, 70, 229, 0.3);
-}
+.role-admin { border-top: 4px solid #dc2626; }
+.role-manager { border-top: 4px solid #d97706; }
+.role-employee { border-top: 4px solid #4f46e5; }
 
 /* Role-specific avatars */
-.avatar-admin {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.avatar-manager {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.avatar-employee {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-}
+.avatar-admin { background: #dc2626; }
+.avatar-manager { background: #d97706; }
+.avatar-employee { background: #4f46e5; }
 
 /* Permissions box */
 .permissions-box {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 14px 18px;
   text-align: left;
 }
@@ -295,8 +275,8 @@ body {
   font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 8px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
 }
 
 .permissions-box p {

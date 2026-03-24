@@ -12,7 +12,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import type { Request, Response } from 'express';
-import { RegisterDto, LoginDto, PocketbaseOAuthDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -21,7 +21,7 @@ interface AuthenticatedRequest extends Request {
   user: {
     email: string;
     name: string;
-    pocketbaseId: string;
+    id: string;
     role: string;
   };
 }
@@ -75,40 +75,32 @@ export class AuthController {
     });
   }
 
-  @Post('google/pocketbase')
-  async googlePocketbaseAuth(
-    @Body() body: PocketbaseOAuthDto,
-    @Res() res: Response,
-  ) {
-    const inputRecord: unknown = body.record;
-    if (!inputRecord || typeof inputRecord !== 'object') {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ message: 'Invalid PocketBase record' });
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // initiates the Google OAuth2 login flow
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as { email: string; name: string; role?: string };
+
+    if (!user) {
+      return res.redirect(
+        `${this.configService.get('FRONTEND_URL')}/login?error=GoogleAuthFailed`,
+      );
     }
 
-    const raw = inputRecord as Record<string, unknown>;
-    const record = {
-      id: typeof raw.id === 'string' ? raw.id : '',
-      email: typeof raw.email === 'string' ? raw.email : '',
-      name: typeof raw.name === 'string' ? raw.name : '',
-      role: typeof raw.role === 'string' ? raw.role : undefined,
-    };
-
-    if (!record.id || !record.email || !record.name) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ message: 'Invalid PocketBase record' });
-    }
-
-    const { accessToken, refreshToken, user } =
-      await this.authService.pocketbaseLogin(record);
+    const { accessToken, refreshToken } = await this.authService.oauthLogin({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    });
 
     this.setAuthCookies(res, accessToken, refreshToken);
 
-    return res
-      .status(HttpStatus.OK)
-      .json({ user, message: 'Google OAuth via PocketBase successful' });
+    return res.redirect(`${this.configService.get('FRONTEND_URL')}/dashboard`);
   }
 
   @Get('me')

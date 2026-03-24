@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
         if (role === "admin") navigate("/dashboard/admin", { replace: true });
         else if (role === "manager") navigate("/dashboard/manager", { replace: true });
         else navigate("/dashboard/employee", { replace: true });
-      } catch (_err) {
+      } catch {
         navigate("/login", { replace: true });
       }
     };

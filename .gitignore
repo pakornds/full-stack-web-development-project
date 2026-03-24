@@ -23,19 +23,8 @@ dist/
 build/
 coverage/
 
-# Python
-__pycache__/
-*.pyc
+# Sqlite
+dev.db
+backend/dev.db
+backend/dev.db-journal
 
-# PocketBase temp/cache (keep real data for sharing)
-database/pb_data/auxiliary.db
-database/pb_data/logs/
-database/pb_data/storage/**/thumbs_*/
-backend/pb_data/auxiliary.db
-backend/pb_data/logs/
-backend/pb_data/storage/**/thumbs_*/
-backend/pocketbase.exe
-
-# gitignore
-.gitignore
-.gitattributes

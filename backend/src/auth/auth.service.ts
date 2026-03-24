@@ -8,33 +8,20 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import PocketBase from 'pocketbase';
+import * as argon2 from 'argon2';
 import { createHmac, randomUUID } from 'node:crypto';
-
+import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { User } from '@prisma/client';
 
 // The MAX_FAILED_LOGIN_ATTEMPTS + 1 failed attempt triggers the lock
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
 const LOGIN_LOCK_DURATION_MS = 15 * 60 * 1000;
 
-// For Type Checking
-// TypeScript don't pull DB schema
-interface PocketBaseUserRecord {
-  id: string;
-  email: string;
-  name: string;
-  role?: string;
-  failedLoginAttempts?: number;
-  lockedUntil?: string | null;
-  currentSessionId?: string | null;
-  refreshTokenHash?: string | null;
-  refreshTokenExpiresAt?: string | null;
-}
-
 interface AuthTokenPayload {
   email: string;
   sub: string;
-  pocketbaseId: string;
+  id: string; // User ID
   role: string;
   sessionId: string;
 }
@@ -50,49 +37,13 @@ interface AuthResult {
   };
 }
 
-interface PocketBaseOAuthRecord {
-  id: string;
-  email: string;
-  name: string;
-  role?: string;
-}
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
-
-  private createPocketBaseClient() {
-    return new PocketBase(
-      this.configService.get<string>('PB_URL') || 'http://127.0.0.1:8090',
-    );
-  }
-
-  private async getAdminClient() {
-    const adminPb = this.createPocketBaseClient();
-
-    try {
-      await adminPb
-        .collection('_superusers')
-        .authWithPassword(
-          this.configService.get<string>('PB_ADMIN_EMAIL') ||
-            'admin@example.com',
-          this.configService.get<string>('PB_ADMIN_PASSWORD') ||
-            'adminpassword',
-        );
-    } catch (err) {
-      console.warn(
-        'Could not authenticate PB admin. Make sure PB_ADMIN_EMAIL/PASSWORD are correct and the admin is created.',
-      );
-      throw new InternalServerErrorException(
-        'PocketBase admin authentication failed',
-      );
-    }
-
-    return adminPb;
-  }
 
   private getJwtSecret() {
     return this.configService.get<string>('JWT_SECRET') || 'secret';
@@ -119,19 +70,19 @@ export class AuthService {
   }
 
   private createTokenPayload(
-    user: Pick<PocketBaseUserRecord, 'email' | 'name' | 'id' | 'role'>,
+    user: Pick<User, 'email' | 'name' | 'id' | 'role'>,
     sessionId: string,
   ): AuthTokenPayload {
     return {
       email: user.email,
       sub: user.name,
-      pocketbaseId: user.id,
+      id: user.id,
       role: user.role || 'employee',
       sessionId,
     };
   }
 
-  private getUserResponse(user: PocketBaseUserRecord) {
+  private getUserResponse(user: User) {
     return {
       id: user.id,
       email: user.email,
@@ -149,18 +100,18 @@ export class AuthService {
     return new Date(decoded.exp * 1000);
   }
 
-  private async revokeSession(adminPb: PocketBase, userId: string) {
-    await adminPb.collection('users').update(userId, {
-      currentSessionId: null,
-      refreshTokenHash: null,
-      refreshTokenExpiresAt: null,
+  private async revokeSession(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentSessionId: null,
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+      },
     });
   }
 
-  private async issueAuthTokens(
-    adminPb: PocketBase,
-    user: PocketBaseUserRecord,
-  ): Promise<AuthResult> {
+  private async issueAuthTokens(user: User): Promise<AuthResult> {
     const sessionId = randomUUID();
     const payload = this.createTokenPayload(user, sessionId);
 
@@ -174,10 +125,13 @@ export class AuthService {
       expiresIn: this.getRefreshTokenTtl(),
     });
 
-    await adminPb.collection('users').update(user.id, {
-      currentSessionId: sessionId,
-      refreshTokenHash: this.hashRefreshToken(refreshToken),
-      refreshTokenExpiresAt: this.getRefreshTokenExpiryDate(refreshToken),
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        currentSessionId: sessionId,
+        refreshTokenHash: this.hashRefreshToken(refreshToken),
+        refreshTokenExpiresAt: this.getRefreshTokenExpiryDate(refreshToken),
+      },
     });
 
     return {
@@ -187,20 +141,6 @@ export class AuthService {
     };
   }
 
-  private async getUserById(adminPb: PocketBase, userId: string) {
-    try {
-      return await adminPb
-        .collection('users')
-        .getOne<PocketBaseUserRecord>(userId);
-    } catch (err: any) {
-      if (err?.status === 404 || err?.response?.code === 404) {
-        return null;
-      }
-
-      throw err;
-    }
-  }
-
   private isAuthTokenPayload(value: unknown): value is AuthTokenPayload {
     if (!value || typeof value !== 'object') {
       return false;
@@ -208,25 +148,12 @@ export class AuthService {
 
     const candidate = value as Partial<AuthTokenPayload>;
     return (
-      typeof candidate.pocketbaseId === 'string' &&
+      typeof candidate.id === 'string' &&
       typeof candidate.sessionId === 'string' &&
       typeof candidate.email === 'string' &&
       typeof candidate.sub === 'string' &&
       typeof candidate.role === 'string'
     );
-  }
-
-  private getFailedLoginAttempts(record: Partial<PocketBaseUserRecord>) {
-    return Number(record.failedLoginAttempts ?? 0);
-  }
-
-  private getLockedUntil(record: Partial<PocketBaseUserRecord>) {
-    if (!record.lockedUntil) {
-      return null;
-    }
-
-    const lockedUntil = new Date(record.lockedUntil);
-    return Number.isNaN(lockedUntil.getTime()) ? null : lockedUntil;
   }
 
   private getLockoutMessage(lockedUntil: Date) {
@@ -238,42 +165,29 @@ export class AuthService {
     return `Too many failed login attempts. Try again in ${remainingMinutes} minute(s).`;
   }
 
-  private async findUserByEmail(adminPb: PocketBase, email: string) {
-    const normalizedEmail = email.replace(/"/g, '\\"');
-
-    try {
-      return await adminPb
-        .collection('users')
-        .getFirstListItem<PocketBaseUserRecord>(`email="${normalizedEmail}"`); // exactly one matching record instead of returning a whole list normally with normal fetch
-    } catch (err: any) {
-      if (err?.status === 404 || err?.response?.code === 404) {
-        return null;
-      }
-
-      throw err;
-    }
-  }
-
-  private async resetFailedLoginAttempts(adminPb: PocketBase, userId: string) {
-    await adminPb.collection('users').update(userId, {
-      failedLoginAttempts: 0,
-      lockedUntil: null,
+  private async resetFailedLoginAttempts(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
     });
   }
 
-  private async recordFailedLoginAttempt(
-    adminPb: PocketBase,
-    userRecord: PocketBaseUserRecord,
-  ) {
-    const nextFailedLoginAttempts = this.getFailedLoginAttempts(userRecord) + 1;
+  private async recordFailedLoginAttempt(user: User) {
+    const nextFailedLoginAttempts = user.failedLoginAttempts + 1;
     const lockedUntil =
       nextFailedLoginAttempts > MAX_FAILED_LOGIN_ATTEMPTS
         ? new Date(Date.now() + LOGIN_LOCK_DURATION_MS)
         : null;
 
-    await adminPb.collection('users').update(userRecord.id, {
-      failedLoginAttempts: nextFailedLoginAttempts,
-      lockedUntil: lockedUntil?.toISOString() ?? null,
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: nextFailedLoginAttempts,
+        lockedUntil,
+      },
     });
 
     return {
@@ -282,137 +196,111 @@ export class AuthService {
     };
   }
 
-  async pocketbaseLogin(record: PocketBaseOAuthRecord) {
+  async oauthLogin(record: { email: string; name: string; role?: string }) {
     if (!record?.email) {
-      throw new InternalServerErrorException('Invalid record from PocketBase');
+      throw new InternalServerErrorException('Invalid OAuth record');
     }
 
     try {
-      const adminPb = await this.getAdminClient();
-      const role: string = record.role || 'employee';
-      return this.issueAuthTokens(adminPb, {
-        id: record.id,
-        email: record.email,
-        name: record.name,
-        role,
+      let user = await this.prisma.user.findUnique({
+        where: { email: record.email },
       });
+
+      if (!user) {
+        // If OAuth user doesn't exist, create them
+        user = await this.prisma.user.create({
+          data: {
+            email: record.email,
+            name: record.name,
+            password: '', // OAuth users might not have a password
+            role: record.role || 'employee',
+          },
+        });
+      }
+
+      return this.issueAuthTokens(user);
     } catch (err) {
       console.error(err);
-      throw new InternalServerErrorException(
-        'Failed to process PocketBase login',
-      );
+      throw new InternalServerErrorException('Failed to process OAuth login');
     }
   }
 
   async register(userDto: RegisterDto) {
     try {
-      const adminPb = await this.getAdminClient();
-
-      const pbUser = await adminPb.collection('users').create({
-        email: userDto.email,
-        name: userDto.name,
-        password: userDto.password,
-        passwordConfirm: userDto.password,
-        role: 'employee', // Required by database migration
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        emailVisibility: true,
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: userDto.email },
       });
 
-      const role: string = (pbUser as any).role || 'employee';
-      return this.issueAuthTokens(adminPb, {
-        id: pbUser.id,
-        email: pbUser.email,
-        name: pbUser.name,
-        role,
+      if (existingUser) {
+        throw new BadRequestException('User with this email already exists.');
+      }
+
+      const hashedPassword = await argon2.hash(userDto.password); // argon2id
+
+      const user = await this.prisma.user.create({
+        data: {
+          email: userDto.email,
+          name: userDto.name,
+          password: hashedPassword,
+          role: 'employee',
+        },
       });
+
+      return this.issueAuthTokens(user);
     } catch (err: any) {
       console.error(err);
-      const fieldErrors = err?.response?.data;
-      if (fieldErrors && typeof fieldErrors === 'object') {
-        const messages = Object.entries(fieldErrors)
-          .map(
-            ([field, detail]: [string, any]) =>
-              `${field}: ${detail?.message ?? detail}`,
-          )
-          .join('; ');
-        throw new BadRequestException(messages);
+      if (err instanceof BadRequestException) {
+        throw err;
       }
-      throw new BadRequestException(
-        err?.response?.message ||
-          'Failed to register user. Email might be in use.',
-      );
+      throw new BadRequestException('Failed to register user.');
     }
   }
 
   async login(loginDto: LoginDto) {
-    // main branch: security audit log
     console.log(
       `[main] Security audit - login request received for: ${loginDto.email}`,
     );
 
-    const adminPb = await this.getAdminClient();
-    const userRecord = await this.findUserByEmail(adminPb, loginDto.email);
+    const user = await this.prisma.user.findUnique({
+      where: { email: loginDto.email },
+    });
 
-    if (userRecord) {
-      const lockedUntil = this.getLockedUntil(userRecord);
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
 
-      // exits immediately and does not attempt auth
-      if (lockedUntil && lockedUntil > new Date()) {
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new HttpException(
+        this.getLockoutMessage(user.lockedUntil),
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    if (user.lockedUntil) {
+      await this.resetFailedLoginAttempts(user.id);
+      user.failedLoginAttempts = 0;
+      user.lockedUntil = null;
+    }
+
+    const { password } = user;
+    const isValidPassword = await argon2.verify(password, loginDto.password);
+
+    if (!isValidPassword) {
+      const { lockedUntil } = await this.recordFailedLoginAttempt(user);
+
+      if (lockedUntil) {
         throw new HttpException(
           this.getLockoutMessage(lockedUntil),
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
-      //clear an expired lock
-      if (lockedUntil) {
-        await this.resetFailedLoginAttempts(adminPb, userRecord.id);
-      }
+
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    try {
-      const userAuthPb = this.createPocketBaseClient(); // Avoids cross-request contamination (Async race condition)
-      const authData = await userAuthPb
-        .collection('users')
-        .authWithPassword(loginDto.email, loginDto.password);
+    await this.resetFailedLoginAttempts(user.id);
 
-      const pbUser = authData.record;
-
-      if (userRecord) {
-        await this.resetFailedLoginAttempts(adminPb, userRecord.id);
-      }
-
-      const role: string = (pbUser as any).role || 'employee';
-      return this.issueAuthTokens(adminPb, {
-        id: pbUser.id,
-        email: pbUser.email,
-        name: pbUser.name,
-        role,
-      });
-    } catch (err: any) {
-      console.error(err);
-      if (err?.status === 400 || err?.response?.code === 400) {
-        if (userRecord) {
-          // incredment failed attempt
-          const { lockedUntil } = await this.recordFailedLoginAttempt(
-            adminPb,
-            userRecord,
-          );
-
-          // throw the first time it happens
-          if (lockedUntil) {
-            throw new HttpException(
-              this.getLockoutMessage(lockedUntil),
-              HttpStatus.TOO_MANY_REQUESTS,
-            );
-          }
-        }
-        // returned for known auth failure from PocketBase (status 400).
-        throw new UnauthorizedException('Invalid email or password');
-      }
-      // generic fallback for unexpected errors
-      throw new UnauthorizedException('Login failed. Please try again.');
-    }
+    return this.issueAuthTokens(user);
   }
 
   async refresh(refreshToken: string): Promise<AuthResult> {
@@ -426,8 +314,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    const adminPb = await this.getAdminClient();
-    const user = await this.getUserById(adminPb, payload.pocketbaseId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.id },
+    });
 
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
@@ -438,20 +327,18 @@ export class AuthService {
     const isRefreshHashValid =
       user.refreshTokenHash &&
       user.refreshTokenHash === this.hashRefreshToken(refreshToken);
-    const refreshExpiry = user.refreshTokenExpiresAt
-      ? new Date(user.refreshTokenExpiresAt)
-      : null;
+    const refreshExpiry = user.refreshTokenExpiresAt;
     const isRefreshNotExpired =
       !!refreshExpiry && !Number.isNaN(refreshExpiry.getTime())
         ? refreshExpiry > new Date()
         : false;
 
     if (!isSessionActive || !isRefreshHashValid || !isRefreshNotExpired) {
-      await this.revokeSession(adminPb, user.id);
+      await this.revokeSession(user.id);
       throw new UnauthorizedException('Refresh token revoked or invalid');
     }
 
-    return this.issueAuthTokens(adminPb, user);
+    return this.issueAuthTokens(user);
   }
 
   async logout(refreshToken?: string | null) {
@@ -469,12 +356,13 @@ export class AuthService {
       return;
     }
 
-    if (!payload?.pocketbaseId) {
+    if (!payload?.id) {
       return;
     }
 
-    const adminPb = await this.getAdminClient();
-    const user = await this.getUserById(adminPb, payload.pocketbaseId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.id },
+    });
     if (!user) {
       return;
     }
@@ -486,7 +374,7 @@ export class AuthService {
       user.refreshTokenHash === this.hashRefreshToken(refreshToken);
 
     if (isSessionActive && isRefreshHashValid) {
-      await this.revokeSession(adminPb, user.id);
+      await this.revokeSession(user.id);
     }
   }
 
@@ -495,8 +383,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid access token payload');
     }
 
-    const adminPb = await this.getAdminClient();
-    const user = await this.getUserById(adminPb, payload.pocketbaseId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.id },
+    });
 
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
@@ -509,7 +398,7 @@ export class AuthService {
     return {
       email: user.email,
       name: user.name,
-      pocketbaseId: user.id,
+      id: user.id,
       role: user.role || 'employee',
       sessionId: user.currentSessionId,
     };

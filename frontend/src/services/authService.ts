@@ -1,7 +1,4 @@
 import api from "../axios";
-import PocketBase from "pocketbase";
-
-const pb = new PocketBase("http://127.0.0.1:8090");
 
 export interface LoginFormData {
   email: string;
@@ -38,17 +35,9 @@ export const loginUser = async (formData: LoginFormData): Promise<UserData> => {
   return response.data;
 };
 
-export const loginWithGoogle = async (): Promise<UserData> => {
-  pb.authStore.clear(); // fix bug
-  const authData = await pb.collection("users").authWithOAuth2({
-    provider: "google",
-    createData: { role: "employee" },
-  });
-
-  const response = await api.post<UserData>("/auth/google/pocketbase", {
-    record: authData.record,
-  });
-  return response.data;
+export const loginWithGoogle = () => {
+  window.location.href = "http://localhost:3000/auth/google";
+  return Promise.resolve({} as UserData);
 };
 
 export const registerUser = async (

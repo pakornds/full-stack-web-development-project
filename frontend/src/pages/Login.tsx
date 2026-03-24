@@ -19,7 +19,7 @@ const Login: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      navigate("/dashboard");
+      // DO NOT navigate here, because loginWithGoogle redirects the browser to Google!
     } catch (err) {
       console.error("OAuth Error:", err);
       let message = "Window closed or access denied";

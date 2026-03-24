@@ -5,18 +5,21 @@ const api = axios.create({
   withCredentials: true, // causes the browser to automatically attach cookies (including the jwt cookie) to every request.
 });
 
+// refresh JWT Token once some request failed
 // Extends Axios's request config with a custom _retry flag
 type RetriableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean; // false as default
 };
 
+// some endpoints shouldn't try to refresh
 const shouldSkipAutoRefresh = (config: InternalAxiosRequestConfig): boolean => {
   const url = config.url ?? "";
   return [
     "/auth/login",
     "/auth/register",
-    "/auth/google/pocketbase",
     "/auth/refresh",
+    "/auth/google",
+    "/auth/google/callback",
   ].some((path) => url.includes(path));
 };
 

@@ -42,13 +42,3 @@ export class LoginDto {
   @IsNotEmpty()
   password!: string;
 }
-
-export class PocketbaseOAuthDto {
-  @IsNotEmpty()
-  record!: {
-    id: string;
-    email: string;
-    name: string;
-    role?: string;
-  };
-}

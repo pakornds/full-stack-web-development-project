@@ -18,12 +18,7 @@ import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
 
 interface AuthenticatedRequest extends Request {
-  user: {
-    email: string;
-    name: string;
-    id: string;
-    role: string;
-  };
+  user: { email: string; name: string; id: string; role: string };
 }
 
 @Controller('auth')
@@ -32,6 +27,8 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
+
+  // ─── Cookie Helpers ────────────────────────────────────────
 
   private setAuthCookies(
     res: Response,
@@ -75,10 +72,12 @@ export class AuthController {
     });
   }
 
+  // ─── OAuth ─────────────────────────────────────────────────
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
-    // initiates the Google OAuth2 login flow
+    // Initiates the Google OAuth2 login flow
   }
 
   @Get('google/callback')
@@ -99,12 +98,13 @@ export class AuthController {
     });
 
     this.setAuthCookies(res, accessToken, refreshToken);
-
     return res.redirect(`${this.configService.get('FRONTEND_URL')}/dashboard`);
   }
 
+  // ─── Profile & Dashboards ─────────────────────────────────
+
   @Get('me')
-  @UseGuards(AuthGuard('jwt')) // This triggers the JwtStrategy. If the cookie is missing, expired, or tampered with, Passport rejects the request with 401 Unauthorized. If valid, the decoded payload is placed on req.user
+  @UseGuards(AuthGuard('jwt'))
   getProfile(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
@@ -158,30 +158,37 @@ export class AuthController {
     };
   }
 
-  @Get('logout')
-  async logout(@Req() req: Request, @Res() res: Response) {
-    const refreshToken =
-      typeof req.cookies?.refreshToken === 'string'
-        ? req.cookies.refreshToken
-        : undefined;
-
-    await this.authService.logout(refreshToken);
-    this.clearAuthCookies(res);
-    return res
-      .status(HttpStatus.OK)
-      .json({ message: 'Logged out successfully' });
-  }
+  // ─── Auth Actions ──────────────────────────────────────────
 
   @Post('login')
   async login(@Body() body: LoginDto, @Res() res: Response) {
+    const result = await this.authService.login(body);
+
+    if (result.requiresTwoFactor) {
+      return res.status(HttpStatus.OK).json({
+        requiresTwoFactor: true,
+        tempToken: result.tempToken,
+        message: 'Please enter your 2FA code',
+      });
+    }
+
+    this.setAuthCookies(res, result.accessToken!, result.refreshToken!);
+
+    return res
+      .status(HttpStatus.OK)
+      .json({ user: result.user, message: 'Logged in successfully' });
+  }
+
+  @Post('register')
+  async register(@Body() body: RegisterDto, @Res() res: Response) {
     const { accessToken, refreshToken, user } =
-      await this.authService.login(body);
+      await this.authService.register(body);
 
     this.setAuthCookies(res, accessToken, refreshToken);
 
     return res
-      .status(HttpStatus.OK)
-      .json({ user, message: 'Logged in successfully' });
+      .status(HttpStatus.CREATED)
+      .json({ user, message: 'Registered successfully' });
   }
 
   @Post('refresh')
@@ -208,15 +215,18 @@ export class AuthController {
       .json({ user, message: 'Token refreshed successfully' });
   }
 
-  @Post('register')
-  async register(@Body() body: RegisterDto, @Res() res: Response) {
-    const { accessToken, refreshToken, user } =
-      await this.authService.register(body);
+  @Get('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const refreshToken =
+      typeof req.cookies?.refreshToken === 'string'
+        ? req.cookies.refreshToken
+        : undefined;
 
-    this.setAuthCookies(res, accessToken, refreshToken);
+    await this.authService.logout(refreshToken);
+    this.clearAuthCookies(res);
 
     return res
-      .status(HttpStatus.CREATED)
-      .json({ user, message: 'Registered successfully' });
+      .status(HttpStatus.OK)
+      .json({ message: 'Logged out successfully' });
   }
 }

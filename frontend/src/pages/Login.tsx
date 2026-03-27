@@ -4,6 +4,7 @@ import axios from "axios";
 import {
   loginUser,
   loginWithGoogle,
+  verifyTwoFactorLogin,
   LoginFormData,
 } from "../services/authService";
 
@@ -16,10 +17,14 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  // 2FA state
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      // DO NOT navigate here, because loginWithGoogle redirects the browser to Google!
     } catch (err) {
       console.error("OAuth Error:", err);
       let message = "Window closed or access denied";
@@ -46,7 +51,15 @@ const Login: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      await loginUser(formData);
+      const response = await loginUser(formData);
+
+      if (response.requiresTwoFactor && response.tempToken) {
+        setTempToken(response.tempToken);
+        setShowTwoFactor(true);
+        setLoading(false);
+        return;
+      }
+
       navigate("/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -66,6 +79,80 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleTwoFactorVerify = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await verifyTwoFactorLogin(tempToken, twoFactorCode);
+      navigate("/dashboard");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const responseMessage = err.response?.data?.message;
+        if (typeof responseMessage === "string") {
+          setError(responseMessage);
+        } else {
+          setError("Invalid 2FA code. Please try again.");
+        }
+      } else {
+        setError("Invalid 2FA code. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── 2FA Verification Screen ───────────────────────────────
+  if (showTwoFactor) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <div className="two-factor-icon">🔐</div>
+          <h1>Two-Factor Authentication</h1>
+          <p>Enter the 6-digit code from your authenticator app.</p>
+
+          {error && <div className="login-error-box">{error}</div>}
+
+          <form onSubmit={handleTwoFactorVerify} className="register-form">
+            <input
+              type="text"
+              value={twoFactorCode}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setTwoFactorCode(val);
+              }}
+              placeholder="000000"
+              className="otp-input"
+              maxLength={6}
+              autoFocus
+              required
+            />
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading || twoFactorCode.length !== 6}
+            >
+              {loading ? "Verifying..." : "Verify Code"}
+            </button>
+          </form>
+
+          <button
+            onClick={() => {
+              setShowTwoFactor(false);
+              setTwoFactorCode("");
+              setTempToken("");
+              setError("");
+            }}
+            className="back-link-btn"
+          >
+            ← Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Normal Login Screen ───────────────────────────────────
   return (
     <div className="login-container">
       <div className="login-card">

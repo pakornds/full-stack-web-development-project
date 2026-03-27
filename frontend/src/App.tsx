@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
+import TwoFactorSetup from "./pages/TwoFactorSetup";
 
 function App(): React.JSX.Element {
   return (
@@ -18,6 +19,7 @@ function App(): React.JSX.Element {
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
         <Route path="/dashboard/manager" element={<ManagerDashboard />} />
         <Route path="/dashboard/employee" element={<EmployeeDashboard />} />
+        <Route path="/settings/2fa" element={<TwoFactorSetup />} />
       </Routes>
     </BrowserRouter>
   );

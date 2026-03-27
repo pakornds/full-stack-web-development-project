@@ -50,6 +50,13 @@ const EmployeeDashboard: React.FC = () => {
             ))}
           </ul>
         </div>
+        <button
+          onClick={() => navigate("/settings/2fa")}
+          className="submit-btn"
+          style={{ marginTop: "12px", width: "100%" }}
+        >
+          🔐 {data.user.twoFactorEnabled ? "Manage 2FA" : "Setup 2FA"}
+        </button>
         <button onClick={handleLogout} className="logout-btn">
           Logout
         </button>

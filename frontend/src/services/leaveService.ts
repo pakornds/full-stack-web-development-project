@@ -136,7 +136,9 @@ export const updateLeaveStatus = async (
 };
 
 export const getDepartmentLeave = async (): Promise<DepartmentLeaveData[]> => {
-  const response = await api.get<DepartmentLeaveData[]>("/dashboard/department");
+  const response = await api.get<DepartmentLeaveData[]>(
+    "/dashboard/department",
+  );
   return response.data;
 };
 
@@ -154,7 +156,7 @@ export const getLeaveLogDetail = async (
 
 export const updateUserRole = async (
   userId: string,
-  role: string
+  role: string,
 ): Promise<unknown> => {
   const response = await api.patch(`/dashboard/users/${userId}/role`, { role });
   return response.data;
@@ -162,9 +164,10 @@ export const updateUserRole = async (
 
 export const updateUserDepartment = async (
   userId: string,
-  departmentId: string | null
+  departmentId: string | null,
 ): Promise<unknown> => {
-  const response = await api.patch(`/dashboard/users/${userId}/department`, { departmentId });
+  const response = await api.patch(`/dashboard/users/${userId}/department`, {
+    departmentId,
+  });
   return response.data;
 };
-

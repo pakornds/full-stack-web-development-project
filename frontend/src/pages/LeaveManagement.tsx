@@ -5,18 +5,22 @@ import sanitizeHtml from "sanitize-html";
 import { getDashboardData, UserData } from "../services/authService";
 import {
   getLeaves,
+  getLeaveTypes,
   createLeave,
   updateLeave,
   deleteLeave,
   updateLeaveStatus,
   LeaveRequest,
+  LeaveType,
   CreateLeaveDto,
 } from "../services/leaveService";
 import { useNavigate } from "react-router-dom";
 
 const LeaveManagement: React.FC = () => {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
+  const [userDept, setUserDept] = useState("");
   const [loading, setLoading] = useState<boolean>(true);
   const [editingLeave, setEditingLeave] = useState<LeaveRequest | null>(null);
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
@@ -36,12 +40,15 @@ const LeaveManagement: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [userData, leavesData] = await Promise.all([
+      const [userData, leavesData, typesData] = await Promise.all([
         getDashboardData(),
         getLeaves(),
+        getLeaveTypes(),
       ]);
       setUser(userData);
+      setUserDept(userData.department?.name || "");
       setLeaves(leavesData);
+      setLeaveTypes(typesData);
     } catch (error) {
       toast.error("Failed to load data. Please log in again.");
       navigate("/login");
@@ -87,7 +94,7 @@ const LeaveManagement: React.FC = () => {
     reset({
       startDate: leave.startDate.substring(0, 10),
       endDate: leave.endDate.substring(0, 10),
-      leaveType: leave.leaveType,
+      leaveType: leave.leaveTypeId,
       reason: leave.reason,
     });
   };
@@ -167,9 +174,11 @@ const LeaveManagement: React.FC = () => {
             style={{ width: "100%", padding: "0.5rem" }}
           >
             <option value="">Select type...</option>
-            <option value="full-day">Full Day</option>
-            <option value="half-day">Half Day</option>
-            <option value="specific-time">Specific Time</option>
+            {leaveTypes.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
           </select>
           {errors.leaveType && (
             <span style={{ color: "red", fontSize: "0.8rem" }}>
@@ -275,7 +284,7 @@ const LeaveManagement: React.FC = () => {
           <h2 style={{ margin: 0, textAlign: "left" }}>Leave Management</h2>
           <div style={{ display: "flex", gap: "1rem" }}>
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/dashboard/personal")}
               style={{
                 padding: "0.5rem 1rem",
                 background: "#f8f9fa",
@@ -409,7 +418,7 @@ const LeaveManagement: React.FC = () => {
                       {new Date(leave.startDate).toLocaleDateString()} -{" "}
                       {new Date(leave.endDate).toLocaleDateString()}
                     </td>
-                    <td style={{ padding: "1rem" }}>{leave.leaveType}</td>
+                    <td style={{ padding: "1rem" }}>{leave.leaveType?.name}</td>
                     <td style={{ padding: "1rem" }}>{leave.reason}</td>
                     <td style={{ padding: "1rem" }}>
                       <span

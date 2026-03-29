@@ -12,7 +12,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import type { Request, Response } from 'express';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -31,7 +36,7 @@ export class AuthController {
   // ─── Cookie Helpers ────────────────────────────────────────
 
   private setAuthCookies(
-    res: Response,
+    res: Response, // This is the object used to send data back to the client
     accessToken: string,
     refreshToken: string,
   ) {
@@ -107,11 +112,20 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
-  getProfile(@Req() req: AuthenticatedRequest) {
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    const user = await this.authService['prisma'].user.findUnique({
+      where: { id: req.user.id },
+      include: { department: true }
+    });
     return {
-      user: req.user,
-      message:
-        'You are authenticated with high security using JWT and HttpOnly cookies',
+      user: {
+        ...req.user,
+        department: {
+          id: user?.department?.id,
+          name: user?.department?.name
+        }
+      },
+      message: 'You are authenticated',
     };
   }
 
@@ -148,7 +162,7 @@ export class AuthController {
 
   @Get('dashboard/hr')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('hr')
+  @Roles('manager')
   getHrDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
@@ -167,7 +181,7 @@ export class AuthController {
 
   @Get('dashboard/employee')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('employee', 'hr', 'admin')
+  @Roles('employee', 'manager', 'admin')
   getEmployeeDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
@@ -249,5 +263,21 @@ export class AuthController {
     return res
       .status(HttpStatus.OK)
       .json({ message: 'Logged out successfully' });
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto, @Res() res: Response) {
+    const response = await this.authService.forgotPassword(body.email);
+    return res.status(HttpStatus.OK).json(response);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto, @Res() res: Response) {
+    const response = await this.authService.resetPassword(
+      body.token,
+      body.newPassword,
+    );
+    this.clearAuthCookies(res); // Clear any existing sessions when resetting
+    return res.status(HttpStatus.OK).json(response);
   }
 }

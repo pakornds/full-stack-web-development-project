@@ -11,8 +11,8 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
+  id                    String         @id @default(uuid())
+  email                 String         @unique
   name                  String
   password              String
   roleId                String
@@ -24,14 +24,16 @@ model User {
   refreshTokenExpiresAt DateTime?
   twoFactorSecret       String?
   twoFactorEnabled      Boolean   @default(false)
+  resetPasswordToken    String?
+  resetPasswordExpiresAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   role                  Role            @relation(fields: [roleId], references: [id])
   department            Department?     @relation(fields: [departmentId], references: [id])
   leaveQuotas           LeaveQuota[]
-  leaveRequests         LeaveRequest[]  @relation("LeaveRequester")
-  approvedRequests      LeaveRequest[]  @relation("LeaveApprover")
+  leaves                LeaveRequest[] @relation("UserLeaves")
+  approvedLeaves        LeaveRequest[] @relation("ApprovedLeaves")
 }
 
 model Role {
@@ -77,18 +79,17 @@ model LeaveQuota {
 }
 
 model LeaveRequest {
-  id          String    @id @default(uuid())
-  userId      String
-  leaveTypeId String
-  startDate   DateTime
-  endDate     DateTime
-  reason      String    @default("")
-  status      String    @default("pending")
-  approverId  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user        User      @relation("LeaveRequester", fields: [userId], references: [id])
-  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
-  approver    User?     @relation("LeaveApprover", fields: [approverId], references: [id])
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation("UserLeaves", fields: [userId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  leaveTypeId  String
+  leaveType    LeaveType @relation(fields: [leaveTypeId], references: [id])
+  reason       String
+  status       String   @default("Pending")
+  approvedById String?
+  approvedBy   User?    @relation("ApprovedLeaves", fields: [approvedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

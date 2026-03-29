@@ -2,10 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateLeaveRequestDto, UpdateLeaveStatusDto } from './dto/leave.dto';
-
 @Injectable()
 export class LeaveService {
   constructor(private readonly prisma: PrismaService) {}
@@ -44,7 +43,7 @@ export class LeaveService {
       where: { userId },
       include: {
         leaveType: true,
-        approver: { select: { id: true, name: true } },
+        approvedBy: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -73,133 +72,31 @@ export class LeaveService {
         endDate: r.endDate,
         reason: r.reason,
         status: r.status,
-        approver: r.approver?.name || null,
+        approver: r.approvedBy?.name || null,
         createdAt: r.createdAt,
       })),
     };
   }
 
-  // ─── Create Leave Request ─────────────────────────────────
-
-  async createLeaveRequest(userId: string, dto: CreateLeaveRequestDto) {
-    const startDate = new Date(dto.startDate);
-    const endDate = new Date(dto.endDate);
-
-    if (endDate < startDate) {
-      throw new BadRequestException('End date must be after start date');
-    }
-
-    // Calculate number of days
-    const days =
-      Math.ceil(
-        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1;
-
-    // Check leave type exists
-    const leaveType = await this.prisma.leaveType.findUnique({
-      where: { id: dto.leaveTypeId },
-    });
-    if (!leaveType) throw new NotFoundException('Leave type not found');
-
-    // Check quota
-    const currentYear = new Date().getFullYear();
-    const quota = await this.prisma.leaveQuota.findUnique({
-      where: {
-        userId_leaveTypeId_year: {
-          userId,
-          leaveTypeId: dto.leaveTypeId,
-          year: currentYear,
-        },
-      },
-    });
-
-    if (!quota) throw new NotFoundException('Leave quota not found');
-
-    if (quota.usedDays + days > quota.totalDays) {
-      throw new BadRequestException(
-        `Insufficient leave balance. You have ${quota.totalDays - quota.usedDays} day(s) left for ${leaveType.name}.`,
-      );
-    }
-
-    return this.prisma.leaveRequest.create({
-      data: {
-        userId,
-        leaveTypeId: dto.leaveTypeId,
-        startDate,
-        endDate,
-        reason: dto.reason || '',
-        status: 'pending',
-      },
-      include: {
-        leaveType: true,
-      },
-    });
-  }
-
-  // ─── Update Leave Request Status (HR / Admin) ─────────────
-
-  async updateLeaveStatus(
-    requestId: string,
-    approverId: string,
-    dto: UpdateLeaveStatusDto,
-  ) {
-    const leaveRequest = await this.prisma.leaveRequest.findUnique({
-      where: { id: requestId },
-      include: { leaveType: true },
-    });
-
-    if (!leaveRequest) throw new NotFoundException('Leave request not found');
-
-    if (leaveRequest.status !== 'pending') {
-      throw new BadRequestException(
-        `Leave request has already been ${leaveRequest.status}`,
-      );
-    }
-
-    // Update the leave request
-    const updated = await this.prisma.leaveRequest.update({
-      where: { id: requestId },
-      data: {
-        status: dto.status,
-        approverId,
-      },
-      include: {
-        leaveType: true,
-        user: { select: { id: true, name: true, email: true } },
-        approver: { select: { id: true, name: true } },
-      },
-    });
-
-    // If approved, update the quota
-    if (dto.status === 'approved') {
-      const days =
-        Math.ceil(
-          (leaveRequest.endDate.getTime() - leaveRequest.startDate.getTime()) /
-            (1000 * 60 * 60 * 24),
-        ) + 1;
-
-      const currentYear = new Date().getFullYear();
-
-      await this.prisma.leaveQuota.updateMany({
-        where: {
-          userId: leaveRequest.userId,
-          leaveTypeId: leaveRequest.leaveTypeId,
-          year: currentYear,
-        },
-        data: { usedDays: { increment: days } },
-      });
-    }
-
-    return updated;
-  }
 
   // ─── Department Leave Dashboard (HR / Admin) ──────────────
 
-  async getDepartmentLeave() {
-    // HR sees users in all departments, Admin sees all
-    // Since RBAC is handled by guards in the controller, everyone querying this receives all departments.
+  async getDepartmentLeave(userId: string, role: string) {
+    let deptWhere = {};
+    if (role === 'manager') {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { departmentId: true },
+      });
+      if (user?.departmentId) {
+        deptWhere = { id: user.departmentId };
+      } else {
+        return [];
+      }
+    }
 
     const departments = await this.prisma.department.findMany({
+      where: deptWhere,
       include: {
         users: {
           select: {
@@ -217,7 +114,7 @@ export class LeaveService {
       orderBy: { name: 'asc' },
     });
 
-    const unassignedUsers = await this.prisma.user.findMany({
+    const unassignedUsers = role === 'admin' ? await this.prisma.user.findMany({
       where: { departmentId: null },
       select: {
         id: true,
@@ -229,7 +126,7 @@ export class LeaveService {
           include: { leaveType: true },
         },
       },
-    });
+    }) : [];
 
     const formattedDepts = departments.map((dept) => ({
       id: dept.id,
@@ -292,7 +189,17 @@ export class LeaveService {
 
   // ─── Leave Logs (Admin only) ──────────────────────────────
 
-  async getLeaveLogs() {
+  async getLeaveLogs(userId: string, role: string) {
+    if (role !== 'admin') {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { department: true }
+      });
+      if (user?.department?.name !== 'Human Resources') {
+        throw new ForbiddenException('Only HR department can view leave logs');
+      }
+    }
+
     const requests = await this.prisma.leaveRequest.findMany({
       include: {
         user: {
@@ -304,7 +211,7 @@ export class LeaveService {
           },
         },
         leaveType: true,
-        approver: { select: { id: true, name: true } },
+        approvedBy: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -322,15 +229,25 @@ export class LeaveService {
       endDate: r.endDate,
       reason: r.reason,
       status: r.status,
-      approver: r.approver
-        ? { id: r.approver.id, name: r.approver.name }
+      approver: r.approvedBy
+        ? { id: r.approvedBy.id, name: r.approvedBy.name }
         : null,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
     }));
   }
 
-  async getLeaveLogDetail(requestId: string) {
+  async getLeaveLogDetail(requestId: string, userId: string, role: string) {
+    if (role !== 'admin') {
+      const u = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { department: true }
+      });
+      if (u?.department?.name !== 'Human Resources') {
+        throw new ForbiddenException('Only HR department can view leave logs');
+      }
+    }
+
     const request = await this.prisma.leaveRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -344,7 +261,7 @@ export class LeaveService {
           },
         },
         leaveType: true,
-        approver: { select: { id: true, name: true, email: true } },
+        approvedBy: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -371,11 +288,11 @@ export class LeaveService {
       totalDays: days,
       reason: request.reason,
       status: request.status,
-      approver: request.approver
+      approver: request.approvedBy
         ? {
-            id: request.approver.id,
-            name: request.approver.name,
-            email: request.approver.email,
+            id: request.approvedBy.id,
+            name: request.approvedBy.name,
+            email: request.approvedBy.email,
           }
         : null,
       createdAt: request.createdAt,

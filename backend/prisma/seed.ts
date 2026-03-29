@@ -4,10 +4,11 @@ import * as argon2 from 'argon2';
 const prisma = new PrismaClient();
 
 async function main() {
+
   console.log('🌱 Seeding database...');
 
   // ── Roles ─────────────────────────────────────────────────
-  const roleNames = ['admin', 'hr', 'manager', 'employee'];
+  const roleNames = ['admin', 'manager', 'employee'];
 
   const roles: Record<string, { id: string; name: string }> = {};
 
@@ -59,14 +60,25 @@ async function main() {
   // ── Users ────────────────────────────────────────────────
   const defaultPassword = await argon2.hash('password123');
 
+  // departments[0]=Engineering, [1]=Human Resources, [2]=Marketing, [3]=Finance, [4]=Operations
   const usersData = [
+    // Admin
     { email: 'admin@company.com', name: 'Alice Admin', roleId: roles['admin'].id, departmentId: departments[0].id },
-    { email: 'hr@company.com', name: 'Hannah HR', roleId: roles['hr'].id, departmentId: departments[1].id },
-    { email: 'emp1@company.com', name: 'John Engineer', roleId: roles['employee'].id, departmentId: departments[0].id },
-    { email: 'emp2@company.com', name: 'Jane Designer', roleId: roles['employee'].id, departmentId: departments[0].id },
-    { email: 'emp3@company.com', name: 'Bob Marketer', roleId: roles['employee'].id, departmentId: departments[2].id },
-    { email: 'emp4@company.com', name: 'Sara Finance', roleId: roles['employee'].id, departmentId: departments[3].id },
-    { email: 'hr2@company.com', name: 'Mike HR', roleId: roles['hr'].id, departmentId: departments[1].id },
+
+    // Managers — one per department
+    { email: 'manager.eng@company.com',  name: 'Tom Engineering Manager', roleId: roles['manager'].id, departmentId: departments[0].id },
+    { email: 'manager.hr@company.com',   name: 'Hannah HR Manager',       roleId: roles['manager'].id, departmentId: departments[1].id },
+    { email: 'manager.mkt@company.com',  name: 'Lisa Marketing Manager',  roleId: roles['manager'].id, departmentId: departments[2].id },
+    { email: 'manager.fin@company.com',  name: 'David Finance Manager',   roleId: roles['manager'].id, departmentId: departments[3].id },
+    { email: 'manager.ops@company.com',  name: 'Karen Operations Manager',roleId: roles['manager'].id, departmentId: departments[4].id },
+
+    // Employees spread across departments
+    { email: 'emp1@company.com', name: 'John Engineer',   roleId: roles['employee'].id, departmentId: departments[0].id },
+    { email: 'emp2@company.com', name: 'Jane Designer',   roleId: roles['employee'].id, departmentId: departments[0].id },
+    { email: 'emp3@company.com', name: 'Bob Marketer',    roleId: roles['employee'].id, departmentId: departments[2].id },
+    { email: 'emp4@company.com', name: 'Sara Finance',    roleId: roles['employee'].id, departmentId: departments[3].id },
+    { email: 'emp5@company.com', name: 'Mike HR',         roleId: roles['employee'].id, departmentId: departments[1].id },
+    { email: 'emp6@company.com', name: 'Eva Operations',  roleId: roles['employee'].id, departmentId: departments[4].id },
   ];
 
   const users = await Promise.all(
@@ -110,62 +122,63 @@ async function main() {
   console.log(`✅ Created leave quotas for ${users.length} users`);
 
   // ── Sample Leave Requests ────────────────────────────────
-  const hrUser = users.find((u) => u.role.name === 'hr')!;
+  // users: [0]=admin, [1]=eng mgr, [2]=hr mgr, [3]=mkt mgr, [4]=fin mgr, [5]=ops mgr
+  //        [6]=John(eng), [7]=Jane(eng), [8]=Bob(mkt), [9]=Sara(fin), [10]=Mike(hr), [11]=Eva(ops)
 
   const sampleRequests = [
     {
-      userId: users[2].id,
+      userId: users[6].id,       // John Engineer
       leaveTypeId: leaveTypes[0].id,
       startDate: new Date('2026-01-15'),
       endDate: new Date('2026-01-17'),
       reason: 'Family vacation',
       status: 'approved',
-      approverId: hrUser.id,
+      approvedById: users[1].id, // Eng manager
     },
     {
-      userId: users[2].id,
+      userId: users[6].id,       // John Engineer
       leaveTypeId: leaveTypes[1].id,
       startDate: new Date('2026-02-10'),
       endDate: new Date('2026-02-10'),
       reason: 'Feeling unwell',
       status: 'approved',
-      approverId: hrUser.id,
+      approvedById: users[1].id, // Eng manager
     },
     {
-      userId: users[3].id,
+      userId: users[7].id,       // Jane Designer (eng)
       leaveTypeId: leaveTypes[0].id,
       startDate: new Date('2026-03-05'),
       endDate: new Date('2026-03-07'),
       reason: 'Personal trip',
       status: 'approved',
-      approverId: hrUser.id,
+      approvedById: users[1].id, // Eng manager
     },
     {
-      userId: users[4].id,
+      userId: users[8].id,       // Bob Marketer
       leaveTypeId: leaveTypes[2].id,
       startDate: new Date('2026-04-01'),
       endDate: new Date('2026-04-01'),
       reason: 'Moving to new apartment',
       status: 'pending',
-      approverId: null,
+      approvedById: null,
     },
     {
-      userId: users[5].id,
+      userId: users[9].id,       // Sara Finance
       leaveTypeId: leaveTypes[0].id,
       startDate: new Date('2026-04-15'),
       endDate: new Date('2026-04-18'),
       reason: 'Spring holiday',
       status: 'pending',
-      approverId: null,
+      approvedById: null,
     },
     {
-      userId: users[2].id,
+      userId: users[10].id,      // Mike HR
       leaveTypeId: leaveTypes[2].id,
       startDate: new Date('2026-05-01'),
       endDate: new Date('2026-05-02'),
       reason: 'Personal errand',
       status: 'rejected',
-      approverId: hrUser.id,
+      approvedById: users[2].id, // HR manager
     },
   ];
 

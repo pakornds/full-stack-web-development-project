@@ -16,7 +16,8 @@ export interface UserData {
   email: string;
   role?: string;
   twoFactorEnabled?: boolean;
-  [key: string]: unknown;
+  department?: { id: string; name: string };
+  [key: string]: any;
 }
 
 export interface DashboardData {
@@ -127,5 +128,15 @@ export const getEmployeeDashboardData = async (): Promise<DashboardData> => {
 
 export const logoutUser = async (): Promise<unknown> => {
   const response = await api.get("/auth/logout");
+  return response.data;
+};
+
+export const forgotPassword = async (email: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>("/auth/forgot-password", { email });
+  return response.data;
+};
+
+export const resetPassword = async (token: string, newPassword: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>("/auth/reset-password", { token, newPassword });
   return response.data;
 };

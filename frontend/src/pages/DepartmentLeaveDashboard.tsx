@@ -14,6 +14,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState("");
+  const [userDept, setUserDept] = useState("");
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
         ]);
         setDepartments(deptData);
         setUserRole(userData.role || "");
+        setUserDept(userData.department?.name || "");
         if (deptData.length > 0) {
           setExpandedDept(deptData[0].id);
         }
@@ -103,7 +105,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
   }
 
   return (
-    <LeaveLayout userRole={userRole}>
+    <LeaveLayout userRole={userRole} departmentName={userDept}>
 
       {/* Main Content */}
       <main className="leave-main">
@@ -232,7 +234,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
                         </button>
                       </td>
                       <td>
-                        {userRole === "admin" || userRole === "hr" ? (
+                        {userRole === "admin" || userRole === "manager" ? (
                           <select
                             className="role-select dept-tag"
                             value={expandedDept || 'unassigned'}
@@ -260,7 +262,6 @@ const DepartmentLeaveDashboard: React.FC = () => {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <option value="employee">Employee</option>
-                            <option value="hr">HR</option>
                             <option value="manager">Manager</option>
                             <option value="admin">Admin</option>
                           </select>

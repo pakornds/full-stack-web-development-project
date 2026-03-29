@@ -42,8 +42,6 @@ export class LeaveController {
     return this.leaveService.getPersonalLeave(userId);
   }
 
-
-
   // ─── Department Leave Dashboard (HR / Admin) ──────────────
 
   @Get('department')
@@ -65,7 +63,10 @@ export class LeaveController {
   @Get('logs/:id')
   @UseGuards(RolesGuard)
   @Roles('manager', 'admin')
-  async getLeaveLogDetail(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+  async getLeaveLogDetail(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.leaveService.getLeaveLogDetail(id, req.user.id, req.user.role);
   }
 

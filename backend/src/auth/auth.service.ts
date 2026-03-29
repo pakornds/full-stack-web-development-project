@@ -318,6 +318,7 @@ export class AuthService {
       name: user.name,
       id: user.id,
       role: user.role.name,
+      departmentId: user.departmentId,
       sessionId: user.currentSessionId,
       twoFactorEnabled: user.twoFactorEnabled,
     };

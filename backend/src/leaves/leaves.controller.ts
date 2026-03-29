@@ -38,6 +38,12 @@ export class LeavesController {
     if (req.user.role === 'employee') {
       return this.leavesService.findByUserId(req.user.id);
     }
+    if (req.user.role === 'manager') {
+      if (!req.user.departmentId) {
+        return this.leavesService.findByUserId(req.user.id);
+      }
+      return this.leavesService.findByDepartmentId(req.user.departmentId);
+    }
     return this.leavesService.findAll();
   }
 

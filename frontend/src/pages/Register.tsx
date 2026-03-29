@@ -41,7 +41,7 @@ const Register: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleRegister: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -49,15 +49,15 @@ const Register: React.FC = () => {
       await registerUser(formData);
       navigate("/dashboard/personal");
     } catch (err) {
-      const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+      const axiosError = err as {
+        response?: { data?: { message?: string | string[] } };
+      };
       const errorMessage = axiosError.response?.data?.message;
 
       if (Array.isArray(errorMessage)) {
         setError(errorMessage.join(" | "));
       } else {
-        setError(
-          errorMessage ?? "Registration failed. Please try again.",
-        );
+        setError(errorMessage ?? "Registration failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -116,10 +116,10 @@ const Register: React.FC = () => {
           className="google-btn"
         >
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+            src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg"
             alt="Google Logo"
           />
-          Register with Google
+          <span>Register with Google</span>
         </button>
 
         <p

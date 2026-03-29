@@ -25,18 +25,21 @@ model User {
   resetPasswordExpiresAt DateTime?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
-  leaves                LeaveRequest[]
+  leaves                LeaveRequest[] @relation("UserLeaves")
+  approvedLeaves        LeaveRequest[] @relation("ApprovedLeaves")
 }
 
 model LeaveRequest {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  startDate DateTime
-  endDate   DateTime
-  leaveType String
-  reason    String
-  status    String   @default("Pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation("UserLeaves", fields: [userId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  leaveType    String
+  reason       String
+  status       String   @default("Pending")
+  approvedById String?
+  approvedBy   User?    @relation("ApprovedLeaves", fields: [approvedById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

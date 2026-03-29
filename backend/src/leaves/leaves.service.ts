@@ -40,6 +40,9 @@ export class LeavesService {
         user: {
           select: { name: true, email: true },
         },
+        approvedBy: {
+          select: { name: true, email: true },
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -48,6 +51,11 @@ export class LeavesService {
   async findByUserId(userId: string) {
     return this.prisma.leaveRequest.findMany({
       where: { userId },
+      include: {
+        approvedBy: {
+          select: { name: true, email: true },
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -103,18 +111,21 @@ export class LeavesService {
     return this.prisma.leaveRequest.delete({ where: { id } });
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(id: string, status: string, approverId: string) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
-    if (!leaveItem) throw new NotFoundException('Leave request not found');
+    if (!leaveItem) throw new NotFoundException('Leave request not found');     
     if (leaveItem.status !== 'Pending') {
       throw new ForbiddenException('Cannot edit a finalized request');
     }
 
     return this.prisma.leaveRequest.update({
       where: { id },
-      data: { status },
+      data: { 
+        status, 
+        approvedById: (status === 'Approved' || status === 'Rejected') ? approverId : null 
+      },
     });
   }
 }

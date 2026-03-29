@@ -65,9 +65,10 @@ export class LeavesController {
   @Roles('manager', 'admin')
   @Patch(':id/status')
   updateStatus(
+    @Request() req,
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateLeaveStatusDto,
   ) {
-    return this.leavesService.updateStatus(id, updateStatusDto.status);
+    return this.leavesService.updateStatus(id, updateStatusDto.status, req.user.id);
   }
 }

@@ -98,7 +98,9 @@ export class AuthController {
     });
 
     this.setAuthCookies(res, accessToken, refreshToken);
-    return res.redirect(`${this.configService.get('FRONTEND_URL')}/dashboard`);
+    return res.redirect(
+      `${this.configService.get('FRONTEND_URL')}/dashboard/personal`,
+    );
   }
 
   // ─── Profile & Dashboards ─────────────────────────────────
@@ -144,9 +146,28 @@ export class AuthController {
     };
   }
 
+  @Get('dashboard/hr')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('hr')
+  getHrDashboard(@Req() req: AuthenticatedRequest) {
+    return {
+      user: req.user,
+      stats: {
+        description: 'HR access',
+        permissions: [
+          'view_profile',
+          'edit_profile',
+          'manage_department_leave',
+          'approve_leave',
+        ],
+      },
+      message: 'Welcome to the HR Dashboard',
+    };
+  }
+
   @Get('dashboard/employee')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('employee')
+  @Roles('employee', 'hr', 'admin')
   getEmployeeDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,

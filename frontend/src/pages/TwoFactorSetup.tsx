@@ -42,9 +42,10 @@ const TwoFactorSetup: React.FC = () => {
     try {
       const data = await generateTwoFactorSecret();
       setSetupData(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
       const msg =
-        err?.response?.data?.message || "Failed to generate 2FA secret";
+        axiosErr?.response?.data?.message || "Failed to generate 2FA secret";
       setError(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setActionLoading(false);
@@ -64,8 +65,9 @@ const TwoFactorSetup: React.FC = () => {
       // Refresh user data
       const userData = await getDashboardData();
       setUser(userData);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Invalid code";
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr?.response?.data?.message || "Invalid code";
       setError(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setActionLoading(false);
@@ -84,8 +86,9 @@ const TwoFactorSetup: React.FC = () => {
       setDisableCode("");
       const userData = await getDashboardData();
       setUser(userData);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Invalid code";
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr?.response?.data?.message || "Invalid code";
       setError(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setActionLoading(false);

@@ -68,6 +68,36 @@ export class AuthService {
     }
   }
 
+  // Helper to get the default "employee" role id
+  private async getDefaultRoleId(): Promise<string> {
+    let role = await this.prisma.role.findUnique({
+      where: { name: 'employee' },
+    });
+    if (!role) {
+      role = await this.prisma.role.create({ data: { name: 'employee' } });
+    }
+    return role.id;
+  }
+
+  // Helper to assign default leave quotas for new users
+  private async assignDefaultLeaveQuotas(userId: string): Promise<void> {
+    const leaveTypes = await this.prisma.leaveType.findMany();
+    if (leaveTypes.length === 0) return;
+
+    const currentYear = new Date().getFullYear();
+    const quotaData = leaveTypes.map((type) => ({
+      userId,
+      leaveTypeId: type.id,
+      year: currentYear,
+      totalDays: type.defaultDays,
+      usedDays: 0,
+    }));
+
+    await this.prisma.leaveQuota.createMany({
+      data: quotaData,
+    });
+  }
+
   // ─── Auth Methods ──────────────────────────────────────────
 
   async oauthLogin(record: OAuthRecord): Promise<AuthResult> {
@@ -78,17 +108,21 @@ export class AuthService {
     try {
       let user = await this.prisma.user.findUnique({
         where: { email: record.email },
+        include: { role: true },
       });
 
       if (!user) {
+        const roleId = await this.getDefaultRoleId();
         user = await this.prisma.user.create({
           data: {
             email: record.email,
             name: record.name,
             password: '',
-            role: record.role || 'employee',
+            roleId,
           },
+          include: { role: true },
         });
+        await this.assignDefaultLeaveQuotas(user.id);
       }
 
       return this.tokenService.issueAuthTokens(user);
@@ -109,15 +143,19 @@ export class AuthService {
       }
 
       const hashedPassword = await argon2.hash(userDto.password);
+      const roleId = await this.getDefaultRoleId();
 
       const user = await this.prisma.user.create({
         data: {
           email: userDto.email,
           name: userDto.name,
           password: hashedPassword,
-          role: 'employee',
+          roleId,
         },
+        include: { role: true },
       });
+
+      await this.assignDefaultLeaveQuotas(user.id);
 
       return this.tokenService.issueAuthTokens(user);
     } catch (err: unknown) {
@@ -134,6 +172,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
+      include: { role: true },
     });
 
     if (!user) {
@@ -190,24 +229,24 @@ export class AuthService {
     let payload: AuthTokenPayload;
 
     try {
-      payload =
-        this.tokenService.verifyToken<AuthTokenPayload>(refreshToken);
+      payload = this.tokenService.verifyToken<AuthTokenPayload>(refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.id },
+      include: { role: true },
     });
 
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
     }
 
-    const isSessionActive =
-      user.currentSessionId === payload.sessionId;
+    const isSessionActive = user.currentSessionId === payload.sessionId;
     const isRefreshValid =
-      user.refreshTokenHash === this.tokenService.hashRefreshToken(refreshToken);
+      user.refreshTokenHash ===
+      this.tokenService.hashRefreshToken(refreshToken);
     const isNotExpired =
       user.refreshTokenExpiresAt != null &&
       !Number.isNaN(user.refreshTokenExpiresAt.getTime()) &&
@@ -242,10 +281,10 @@ export class AuthService {
 
     if (!user) return;
 
-    const isSessionActive =
-      user.currentSessionId === payload.sessionId;
+    const isSessionActive = user.currentSessionId === payload.sessionId;
     const isRefreshValid =
-      user.refreshTokenHash === this.tokenService.hashRefreshToken(refreshToken);
+      user.refreshTokenHash ===
+      this.tokenService.hashRefreshToken(refreshToken);
 
     if (isSessionActive && isRefreshValid) {
       await this.tokenService.revokeSession(user.id);
@@ -259,6 +298,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.id },
+      include: { role: true },
     });
 
     if (!user) {
@@ -273,7 +313,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       id: user.id,
-      role: user.role || 'employee',
+      role: user.role.name,
       sessionId: user.currentSessionId,
       twoFactorEnabled: user.twoFactorEnabled,
     };

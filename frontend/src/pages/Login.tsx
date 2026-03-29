@@ -60,7 +60,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      navigate("/dashboard");
+      navigate("/dashboard/personal");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const responseMessage = err.response?.data?.message;
@@ -85,7 +85,7 @@ const Login: React.FC = () => {
     setError("");
     try {
       await verifyTwoFactorLogin(tempToken, twoFactorCode);
-      navigate("/dashboard");
+      navigate("/dashboard/personal");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const responseMessage = err.response?.data?.message;

@@ -45,10 +45,7 @@ export class TwoFactorController {
   }
 
   @Post('verify-login')
-  async verifyLogin(
-    @Body() body: TwoFactorLoginDto,
-    @Res() res: Response,
-  ) {
+  async verifyLogin(@Body() body: TwoFactorLoginDto, @Res() res: Response) {
     const { accessToken, refreshToken, user } =
       await this.twoFactorService.verifyLogin(body.tempToken, body.code);
 

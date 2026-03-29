@@ -115,6 +115,11 @@ export const getManagerDashboardData = async (): Promise<DashboardData> => {
   return response.data;
 };
 
+export const getHrDashboardData = async (): Promise<DashboardData> => {
+  const response = await api.get<DashboardData>("/auth/dashboard/hr");
+  return response.data;
+};
+
 export const getEmployeeDashboardData = async (): Promise<DashboardData> => {
   const response = await api.get<DashboardData>("/auth/dashboard/employee");
   return response.data;

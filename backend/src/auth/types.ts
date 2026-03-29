@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User, Role } from '@prisma/client';
 
 // ─── JWT Payload Types ───────────────────────────────────────
 
@@ -57,14 +57,18 @@ export interface AuthenticatedUser {
   twoFactorEnabled: boolean;
 }
 
+// ─── User with role relation ─────────────────────────────────
+
+export type UserWithRole = User & { role: Role };
+
 // ─── Helpers ─────────────────────────────────────────────────
 
-export function toUserResponse(user: User): UserResponse {
+export function toUserResponse(user: UserWithRole): UserResponse {
   return {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
+    role: user.role.name,
     twoFactorEnabled: user.twoFactorEnabled,
   };
 }

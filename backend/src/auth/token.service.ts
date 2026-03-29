@@ -8,6 +8,7 @@ import {
   AuthTokenPayload,
   TempTokenPayload,
   AuthResult,
+  UserWithRole,
   toUserResponse,
 } from './types';
 
@@ -46,14 +47,14 @@ export class TokenService {
   }
 
   private createPayload(
-    user: Pick<User, 'email' | 'name' | 'id' | 'role'>,
+    user: UserWithRole,
     sessionId: string,
   ): AuthTokenPayload {
     return {
       email: user.email,
       sub: user.name,
       id: user.id,
-      role: user.role || 'employee',
+      role: user.role.name,
       sessionId,
     };
   }
@@ -68,7 +69,7 @@ export class TokenService {
 
   // ─── Token Operations ──────────────────────────────────────
 
-  async issueAuthTokens(user: User): Promise<AuthResult> {
+  async issueAuthTokens(user: UserWithRole): Promise<AuthResult> {
     const sessionId = randomUUID();
     const payload = this.createPayload(user, sessionId);
 

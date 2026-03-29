@@ -15,7 +15,8 @@ model User {
   email                 String    @unique
   name                  String
   password              String
-  role                  String    @default("employee")
+  roleId                String
+  departmentId          String?
   failedLoginAttempts   Int       @default(0)
   lockedUntil           DateTime?
   currentSessionId      String?
@@ -25,6 +26,12 @@ model User {
   twoFactorEnabled      Boolean   @default(false)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  role                  Role            @relation(fields: [roleId], references: [id])
+  department            Department?     @relation(fields: [departmentId], references: [id])
+  leaveQuotas           LeaveQuota[]
+  leaveRequests         LeaveRequest[]  @relation("LeaveRequester")
+  approvedRequests      LeaveRequest[]  @relation("LeaveApprover")
 }
 
 model Role {
@@ -32,4 +39,56 @@ model Role {
   name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  users     User[]
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+}
+
+model LeaveType {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  defaultDays   Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  leaveQuotas   LeaveQuota[]
+  leaveRequests LeaveRequest[]
+}
+
+model LeaveQuota {
+  id          String    @id @default(uuid())
+  userId      String
+  leaveTypeId String
+  year        Int
+  totalDays   Int       @default(0)
+  usedDays    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id])
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([userId, leaveTypeId, year])
+}
+
+model LeaveRequest {
+  id          String    @id @default(uuid())
+  userId      String
+  leaveTypeId String
+  startDate   DateTime
+  endDate     DateTime
+  reason      String    @default("")
+  status      String    @default("pending")
+  approverId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation("LeaveRequester", fields: [userId], references: [id])
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id])
+  approver    User?     @relation("LeaveApprover", fields: [approverId], references: [id])
 }

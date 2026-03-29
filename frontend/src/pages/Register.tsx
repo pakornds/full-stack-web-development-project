@@ -47,11 +47,11 @@ const Register: React.FC = () => {
     setError("");
     try {
       await registerUser(formData);
-      navigate("/dashboard");
+      navigate("/dashboard/personal");
     } catch (err) {
       const axiosError = err as { response?: { data?: { message?: string | string[] } } };
       const errorMessage = axiosError.response?.data?.message;
-      
+
       if (Array.isArray(errorMessage)) {
         setError(errorMessage.join(" | "));
       } else {

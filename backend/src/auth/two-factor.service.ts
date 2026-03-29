@@ -23,6 +23,7 @@ export class TwoFactorService {
   private async findUserOrThrow(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: { role: true },
     });
 
     if (!user) {
@@ -88,9 +89,7 @@ export class TwoFactorService {
     const user = await this.findUserOrThrow(userId);
 
     if (!user.twoFactorEnabled || !user.twoFactorSecret) {
-      throw new BadRequestException(
-        'Two-factor authentication is not enabled',
-      );
+      throw new BadRequestException('Two-factor authentication is not enabled');
     }
 
     if (!this.verifyOtp(code, user.twoFactorSecret)) {
@@ -120,6 +119,7 @@ export class TwoFactorService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.id },
+      include: { role: true },
     });
 
     if (!user || !user.twoFactorSecret) {

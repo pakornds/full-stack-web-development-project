@@ -13,6 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   ) {
     super({
       //passport-jwt
+      // return payload after verifying
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: any) => {
           const data = (request as { cookies?: { jwt?: string } } | null)

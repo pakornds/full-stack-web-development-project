@@ -12,7 +12,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import type { Request, Response } from 'express';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -31,7 +36,7 @@ export class AuthController {
   // ─── Cookie Helpers ────────────────────────────────────────
 
   private setAuthCookies(
-    res: Response,
+    res: Response, // This is the object used to send data back to the client
     accessToken: string,
     refreshToken: string,
   ) {
@@ -249,5 +254,21 @@ export class AuthController {
     return res
       .status(HttpStatus.OK)
       .json({ message: 'Logged out successfully' });
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto, @Res() res: Response) {
+    const response = await this.authService.forgotPassword(body.email);
+    return res.status(HttpStatus.OK).json(response);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDto, @Res() res: Response) {
+    const response = await this.authService.resetPassword(
+      body.token,
+      body.newPassword,
+    );
+    this.clearAuthCookies(res); // Clear any existing sessions when resetting
+    return res.status(HttpStatus.OK).json(response);
   }
 }

@@ -7,6 +7,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import * as nodemailer from 'nodemailer';
+import { randomUUID } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from './token.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -25,6 +28,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ─── Account Lockout Helpers ───────────────────────────────
@@ -317,5 +321,116 @@ export class AuthService {
       sessionId: user.currentSessionId,
       twoFactorEnabled: user.twoFactorEnabled,
     };
+  }
+
+  private async sendPasswordResetEmail(email: string, token: string) {
+    let transporter: nodemailer.Transporter;
+
+    const smtpHost = this.configService.get<string>('SMTP_HOST');
+    if (smtpHost) {
+      transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: this.configService.get<number>('SMTP_PORT') || 587,
+        secure: this.configService.get<string>('SMTP_SECURE') === 'true',
+        auth: {
+          user: this.configService.get<string>('SMTP_USER'),
+          pass: this.configService.get<string>('SMTP_PASS'),
+        },
+      } as nodemailer.TransportOptions);
+    } else {
+      // Create an ethereal test account for development if no SMTP config is present
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      } as nodemailer.TransportOptions);
+    }
+
+    const info = await transporter.sendMail({
+      from: '"Your App Name" <noreply@example.com>',
+      to: email,
+      subject: 'Password Reset Token',
+      text: `You requested a password reset. Your reset token is: ${token}\n\nEnter this token on the password reset page.`,
+      html: `<p>You requested a password reset.</p><p>Your reset token is: <strong>${token}</strong></p><p>Enter this token on the password reset page.</p>`,
+    });
+
+    console.log(
+      `\n========= EMAIL SENT =========\nMessage sent: ${info.messageId}`,
+    );
+    if (!smtpHost) {
+      console.log(
+        `Preview URL: ${nodemailer.getTestMessageUrl(info)}\n==============================\n`,
+      );
+    } else {
+      console.log(`==============================\n`);
+    }
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Return success even if user doesn't exist to prevent enumeration
+      return { message: 'If this email exists, a reset link has been sent.' };
+    }
+
+    const resetToken = randomUUID();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpiresAt: expiresAt,
+      },
+    });
+
+    // Send the email with the token (runs asynchronously in background usually, but here we wait to ensure it handles)
+    try {
+      await this.sendPasswordResetEmail(email, resetToken);
+    } catch (error) {
+      console.error('Failed to send reset email:', error);
+      // Even if email fails, we shouldn't expose that the user exists/does not exist, just log it.
+    }
+
+    return { message: 'If this email exists, a reset link has been sent.' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+      },
+    });
+
+    if (
+      !user ||
+      !user.resetPasswordExpiresAt ||
+      user.resetPasswordExpiresAt < new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const hashedPassword = await argon2.hash(newPassword);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpiresAt: null,
+        currentSessionId: null, // Force logout
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
+    });
+
+    return { message: 'Password has been reset successfully.' };
   }
 }

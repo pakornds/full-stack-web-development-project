@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LeaveModule } from './leave/leave.module';
+import { LeavesModule } from './leaves/leaves.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { LeaveModule } from './leave/leave.module';
     AuthModule,
     PrismaModule,
     LeaveModule,
+    LeavesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

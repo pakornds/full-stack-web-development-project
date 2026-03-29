@@ -25,7 +25,7 @@ const shouldSkipAutoRefresh = (config: InternalAxiosRequestConfig): boolean => {
 
 let refreshPromise: Promise<void> | null = null;
 
-// retry once if api returns error
+// retry once if api returns error (unauthorized)
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -58,6 +58,7 @@ api.interceptors.response.use(
       // Retry the original request
       return api(originalConfig);
     } catch (refreshError) {
+      window.location.href = "/login?expired=1";
       return Promise.reject(refreshError);
     }
   },

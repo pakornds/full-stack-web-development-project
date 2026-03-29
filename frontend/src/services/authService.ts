@@ -16,7 +16,8 @@ export interface UserData {
   email: string;
   role?: string;
   twoFactorEnabled?: boolean;
-  [key: string]: unknown;
+  department?: { id: string; name: string };
+  [key: string]: any;
 }
 
 export interface DashboardData {

@@ -27,7 +27,7 @@ export class LeavesService {
         userId,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-        leaveType: data.leaveType,
+        leaveTypeId: data.leaveType,
         reason: cleanReason,
         status: 'Pending',
       },
@@ -42,7 +42,8 @@ export class LeavesService {
         },
         approvedBy: {
           select: { name: true, email: true },
-        }
+        },
+        leaveType: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -54,7 +55,8 @@ export class LeavesService {
       include: {
         approvedBy: {
           select: { name: true, email: true },
-        }
+        },
+        leaveType: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -88,7 +90,7 @@ export class LeavesService {
       data: {
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-        leaveType: data.leaveType,
+        leaveTypeId: data.leaveType,
         reason: cleanReason,
       },
     });

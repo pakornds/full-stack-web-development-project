@@ -4,29 +4,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getPersonalLeave,
   getPersonalLeaveForUser,
-  getLeaveTypes,
-  createLeaveRequest,
   PersonalLeaveData,
-  LeaveType,
 } from "../services/leaveService";
 import { formatDate, getStatusClass } from "../utils/formatters";
 
 
 const PersonalLeaveDashboard: React.FC = () => {
   const [data, setData] = useState<PersonalLeaveData | null>(null);
-  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [showRequestForm, setShowRequestForm] = useState(false);
-  const [requestForm, setRequestForm] = useState({
-    leaveTypeId: "",
-    startDate: "",
-    endDate: "",
-    reason: "",
-  });
-  const [requestError, setRequestError] = useState("");
-  const [requestSuccess, setRequestSuccess] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const isViewingOther = !!userId;
@@ -34,53 +20,19 @@ const PersonalLeaveDashboard: React.FC = () => {
   const loadData = React.useCallback(async () => {
     try {
       setLoading(true);
-      const [leaveData, types] = await Promise.all([
-        userId ? getPersonalLeaveForUser(userId) : getPersonalLeave(),
-        getLeaveTypes(),
-      ]);
+      const leaveData = await (userId ? getPersonalLeaveForUser(userId) : getPersonalLeave());
       setData(leaveData);
-      setLeaveTypes(types);
-      if (types.length > 0 && !requestForm.leaveTypeId) {
-        setRequestForm((prev) => ({ ...prev, leaveTypeId: types[0].id }));
-      }
     } catch {
       setError("Access denied or session expired.");
       setTimeout(() => navigate("/login"), 2000);
     } finally {
       setLoading(false);
     }
-  }, [userId, navigate, requestForm.leaveTypeId]);
+  }, [userId, navigate]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-  const handleSubmitRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRequestError("");
-    setRequestSuccess("");
-    setSubmitting(true);
-
-    try {
-      await createLeaveRequest(requestForm);
-      setRequestSuccess("Leave request submitted successfully!");
-      setShowRequestForm(false);
-      setRequestForm({
-        leaveTypeId: leaveTypes[0]?.id || "",
-        startDate: "",
-        endDate: "",
-        reason: "",
-      });
-      await loadData();
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setRequestError(
-        axiosErr.response?.data?.message || "Failed to submit leave request"
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
 
   if (loading) {
     return (
@@ -106,7 +58,7 @@ const PersonalLeaveDashboard: React.FC = () => {
   if (!data) return null;
 
   return (
-    <LeaveLayout userRole={data.user.role}>
+    <LeaveLayout userRole={data.user.role} departmentName={data.user.department?.name || ""}>
 
       {/* Main Content */}
       <main className="leave-main">
@@ -137,101 +89,13 @@ const PersonalLeaveDashboard: React.FC = () => {
             <button
               id="request-leave-btn"
               className="primary-action-btn"
-              onClick={() => setShowRequestForm(!showRequestForm)}
+              onClick={() => navigate("/leave-management")}
             >
-              {showRequestForm ? "✕ Cancel" : "＋ Request Leave"}
+              Go to Leave Management
             </button>
           )}
         </header>
 
-        {/* Request Form */}
-        {showRequestForm && (
-          <div className="leave-request-form-card slide-down">
-            <h3>📝 New Leave Request</h3>
-            {requestError && (
-              <div className="form-error">{requestError}</div>
-            )}
-            {requestSuccess && (
-              <div className="form-success">{requestSuccess}</div>
-            )}
-            <form onSubmit={handleSubmitRequest} className="request-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="leaveType">Leave Type</label>
-                  <select
-                    id="leaveType"
-                    value={requestForm.leaveTypeId}
-                    onChange={(e) =>
-                      setRequestForm({
-                        ...requestForm,
-                        leaveTypeId: e.target.value,
-                      })
-                    }
-                    required
-                  >
-                    {leaveTypes.map((lt) => (
-                      <option key={lt.id} value={lt.id}>
-                        {lt.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="startDate">Start Date</label>
-                  <input
-                    id="startDate"
-                    type="date"
-                    value={requestForm.startDate}
-                    onChange={(e) =>
-                      setRequestForm({
-                        ...requestForm,
-                        startDate: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="endDate">End Date</label>
-                  <input
-                    id="endDate"
-                    type="date"
-                    value={requestForm.endDate}
-                    onChange={(e) =>
-                      setRequestForm({
-                        ...requestForm,
-                        endDate: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor="reason">Reason</label>
-                <textarea
-                  id="reason"
-                  placeholder="Enter your reason for leave..."
-                  value={requestForm.reason}
-                  onChange={(e) =>
-                    setRequestForm({
-                      ...requestForm,
-                      reason: e.target.value,
-                    })
-                  }
-                  rows={3}
-                />
-              </div>
-              <button
-                type="submit"
-                className="primary-action-btn"
-                disabled={submitting}
-              >
-                {submitting ? "Submitting..." : "Submit Request"}
-              </button>
-            </form>
-          </div>
-        )}
 
         {/* Quota Cards */}
         <section className="quota-section">

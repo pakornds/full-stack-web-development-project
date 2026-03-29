@@ -10,7 +10,6 @@ export class CreateLeaveDto {
   endDate!: string;
 
   @IsString()
-  @IsEnum(['full-day', 'half-day', 'specific-time'])
   @IsNotEmpty()
   leaveType!: string;
 
@@ -29,7 +28,6 @@ export class UpdateLeaveDto {
   endDate!: string;
 
   @IsString()
-  @IsEnum(['full-day', 'half-day', 'specific-time'])
   @IsNotEmpty()
   leaveType!: string;
 

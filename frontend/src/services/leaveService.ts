@@ -160,7 +160,12 @@ export interface LeaveRequest {
   };
   startDate: string;
   endDate: string;
-  leaveType: string;
+  leaveTypeId: string;
+  leaveType: {
+    id: string;
+    name: string;
+    defaultDays: number;
+  };
   reason: string;
   status: string;
   createdAt: string;

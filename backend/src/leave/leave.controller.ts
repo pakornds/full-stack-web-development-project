@@ -12,8 +12,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { LeaveService } from './leave.service';
-import { CreateLeaveRequestDto, UpdateLeaveStatusDto } from './dto/leave.dto';
-
 interface AuthenticatedRequest {
   user: { id: string; email: string; name: string; role: string };
 }
@@ -39,64 +37,43 @@ export class LeaveController {
 
   @Get('personal/:userId')
   @UseGuards(RolesGuard)
-  @Roles('hr', 'admin')
+  @Roles('manager', 'admin')
   async getPersonalLeaveForUser(@Param('userId') userId: string) {
     return this.leaveService.getPersonalLeave(userId);
   }
 
-  // ─── Create Leave Request ─────────────────────────────────
 
-  @Post('request')
-  async createLeaveRequest(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: CreateLeaveRequestDto,
-  ) {
-    return this.leaveService.createLeaveRequest(req.user.id, dto);
-  }
-
-  // ─── Update Leave Status (HR / Admin) ─────────────────────
-
-  @Patch('request/:id/status')
-  @UseGuards(RolesGuard)
-  @Roles('hr', 'admin')
-  async updateLeaveStatus(
-    @Param('id') id: string,
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: UpdateLeaveStatusDto,
-  ) {
-    return this.leaveService.updateLeaveStatus(id, req.user.id, dto);
-  }
 
   // ─── Department Leave Dashboard (HR / Admin) ──────────────
 
   @Get('department')
   @UseGuards(RolesGuard)
-  @Roles('hr', 'admin')
-  async getDepartmentLeave() {
-    return this.leaveService.getDepartmentLeave();
+  @Roles('manager', 'admin')
+  async getDepartmentLeave(@Req() req: AuthenticatedRequest) {
+    return this.leaveService.getDepartmentLeave(req.user.id, req.user.role);
   }
 
   // ─── Leave Logs (Admin only) ──────────────────────────────
 
   @Get('logs')
   @UseGuards(RolesGuard)
-  @Roles('admin')
-  async getLeaveLogs() {
-    return this.leaveService.getLeaveLogs();
+  @Roles('manager', 'admin')
+  async getLeaveLogs(@Req() req: AuthenticatedRequest) {
+    return this.leaveService.getLeaveLogs(req.user.id, req.user.role);
   }
 
   @Get('logs/:id')
   @UseGuards(RolesGuard)
-  @Roles('admin')
-  async getLeaveLogDetail(@Param('id') id: string) {
-    return this.leaveService.getLeaveLogDetail(id);
+  @Roles('manager', 'admin')
+  async getLeaveLogDetail(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.leaveService.getLeaveLogDetail(id, req.user.id, req.user.role);
   }
 
   // ─── Change User Role (Admin only) ────────────────────────
 
   @Patch('users/:id/role')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'hr')
+  @Roles('admin', 'manager')
   async updateUserRole(@Param('id') id: string, @Body('role') role: string) {
     return this.leaveService.updateUserRole(id, role);
   }
@@ -105,7 +82,7 @@ export class LeaveController {
 
   @Patch('users/:id/department')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'hr')
+  @Roles('admin', 'manager')
   async updateUserDepartment(
     @Param('id') id: string,
     @Body('departmentId') departmentId: string | null,

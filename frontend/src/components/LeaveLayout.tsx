@@ -5,9 +5,10 @@ import { logoutUser } from "../services/authService";
 interface LeaveLayoutProps {
   children: React.ReactNode;
   userRole: string;
+  departmentName?: string;
 }
 
-const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole }) => {
+const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmentName }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
@@ -38,7 +39,7 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole }) => {
             My Leave
           </button>
 
-          {(userRole === "hr" || userRole === "admin") && (
+          {(userRole === "manager" || userRole === "admin") && (
             <button
               className={`sidebar-link ${path === "/dashboard/department" ? "active" : ""}`}
               onClick={() => navigate("/dashboard/department")}
@@ -48,7 +49,7 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole }) => {
             </button>
           )}
 
-          {userRole === "admin" && (
+          {(userRole === "admin" || departmentName === "Human Resources") && (
             <button
               className={`sidebar-link ${path === "/dashboard/logs" ? "active" : ""}`}
               onClick={() => navigate("/dashboard/logs")}

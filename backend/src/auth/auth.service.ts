@@ -352,7 +352,7 @@ export class AuthService {
     }
 
     const info = await transporter.sendMail({
-      from: '"Your App Name" <noreply@example.com>',
+      from: '"Leave Management System" <noreply@leave.com>',
       to: email,
       subject: 'Password Reset Token',
       text: `You requested a password reset. Your reset token is: ${token}\n\nEnter this token on the password reset page.`,

@@ -112,11 +112,20 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
-  getProfile(@Req() req: AuthenticatedRequest) {
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    const user = await this.authService['prisma'].user.findUnique({
+      where: { id: req.user.id },
+      include: { department: true }
+    });
     return {
-      user: req.user,
-      message:
-        'You are authenticated with high security using JWT and HttpOnly cookies',
+      user: {
+        ...req.user,
+        department: {
+          id: user?.department?.id,
+          name: user?.department?.name
+        }
+      },
+      message: 'You are authenticated',
     };
   }
 
@@ -153,7 +162,7 @@ export class AuthController {
 
   @Get('dashboard/hr')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('hr')
+  @Roles('manager')
   getHrDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,
@@ -172,7 +181,7 @@ export class AuthController {
 
   @Get('dashboard/employee')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('employee', 'hr', 'admin')
+  @Roles('employee', 'manager', 'admin')
   getEmployeeDashboard(@Req() req: AuthenticatedRequest) {
     return {
       user: req.user,

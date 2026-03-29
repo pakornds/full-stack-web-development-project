@@ -16,6 +16,7 @@ const LogLeaveDashboard: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState("");
+  const [userDept, setUserDept] = useState("");
   const [selectedLog, setSelectedLog] = useState<LeaveLogDetail | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -32,6 +33,7 @@ const LogLeaveDashboard: React.FC = () => {
       ]);
       setLogs(data);
       setUserRole(userData.role || "");
+      setUserDept(userData.department?.name || "");
     } catch {
       setError("Access denied or session expired.");
       setTimeout(() => navigate("/login"), 2000);
@@ -114,7 +116,7 @@ const LogLeaveDashboard: React.FC = () => {
   }
 
   return (
-    <LeaveLayout userRole={userRole}>
+    <LeaveLayout userRole={userRole} departmentName={userDept}>
 
       {/* Main Content */}
       <main className="leave-main">

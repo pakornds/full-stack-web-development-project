@@ -11,16 +11,32 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
+  id                    String         @id @default(uuid())
+  email                 String         @unique
   name                  String
   password              String
-  role                  String    @default("employee")
-  failedLoginAttempts   Int       @default(0)
+  role                  String         @default("employee")
+  failedLoginAttempts   Int            @default(0)
   lockedUntil           DateTime?
   currentSessionId      String?
   refreshTokenHash      String?
   refreshTokenExpiresAt DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  resetPasswordToken    String?
+  resetPasswordExpiresAt DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  leaves                LeaveRequest[]
+}
+
+model LeaveRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  leaveType String
+  reason    String
+  status    String   @default("Pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import sanitizeHtml from "sanitize-html";
@@ -35,11 +35,7 @@ const LeaveManagement: React.FC = () => {
     formState: { errors, isSubmitting },
   } = useForm<CreateLeaveDto>();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [userData, leavesData, typesData] = await Promise.all([
@@ -57,7 +53,11 @@ const LeaveManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const onSubmit = async (data: CreateLeaveDto) => {
     // Sanitize reason frontend-side as an extra precaution
@@ -81,8 +81,9 @@ const LeaveManagement: React.FC = () => {
       setEditingLeave(null);
       reset();
       fetchData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to process request");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Failed to process request");
     }
   };
 
@@ -102,14 +103,15 @@ const LeaveManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this leave request?")) {
+    if (globalThis.confirm("Are you sure you want to delete this leave request?")) {
       try {
         await deleteLeave(id);
         toast.success("Leave request deleted");
         fetchData();
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
         toast.error(
-          error.response?.data?.message || "Failed to delete request",
+          err.response?.data?.message || "Failed to delete request",
         );
       }
     }
@@ -120,8 +122,9 @@ const LeaveManagement: React.FC = () => {
       await updateLeaveStatus(id, status);
       toast.success(`Request ${status.toLowerCase()}`);
       fetchData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update status");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Failed to update status");
     }
   };
 
@@ -192,6 +195,7 @@ const LeaveManagement: React.FC = () => {
                     }}
                   >
                     <label
+                      htmlFor="startDate"
                       style={{
                         fontSize: "14px",
                         fontWeight: 500,
@@ -201,6 +205,7 @@ const LeaveManagement: React.FC = () => {
                       Start Date
                     </label>
                     <input
+                      id="startDate"
                       type="date"
                       {...register("startDate", {
                         required: "Start date is required",
@@ -221,6 +226,7 @@ const LeaveManagement: React.FC = () => {
                     }}
                   >
                     <label
+                      htmlFor="endDate"
                       style={{
                         fontSize: "14px",
                         fontWeight: 500,
@@ -230,6 +236,7 @@ const LeaveManagement: React.FC = () => {
                       End Date
                     </label>
                     <input
+                      id="endDate"
                       type="date"
                       {...register("endDate", {
                         required: "End date is required",
@@ -251,6 +258,7 @@ const LeaveManagement: React.FC = () => {
                   }}
                 >
                   <label
+                    htmlFor="leaveType"
                     style={{
                       fontSize: "14px",
                       fontWeight: 500,
@@ -260,6 +268,7 @@ const LeaveManagement: React.FC = () => {
                     Leave Type
                   </label>
                   <select
+                    id="leaveType"
                     {...register("leaveType", {
                       required: "Leave type is required",
                     })}
@@ -293,6 +302,7 @@ const LeaveManagement: React.FC = () => {
                   }}
                 >
                   <label
+                    htmlFor="reason"
                     style={{
                       fontSize: "14px",
                       fontWeight: 500,
@@ -302,6 +312,7 @@ const LeaveManagement: React.FC = () => {
                     Reason
                   </label>
                   <textarea
+                    id="reason"
                     {...register("reason", { required: "Reason is required" })}
                     style={{
                       padding: "12px 15px",
@@ -330,11 +341,11 @@ const LeaveManagement: React.FC = () => {
                     disabled={isSubmitting}
                     style={{ flex: 1 }}
                   >
-                    {isSubmitting
-                      ? "Submitting..."
-                      : editingLeave
-                        ? "Update Request"
-                        : "Submit Request"}
+                    {(() => {
+                      if (isSubmitting) return "Submitting...";
+                      if (editingLeave) return "Update Request";
+                      return "Submit Request";
+                    })()}
                   </button>
                   <button
                     type="button"

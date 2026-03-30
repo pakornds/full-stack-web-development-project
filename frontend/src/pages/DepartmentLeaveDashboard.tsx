@@ -45,7 +45,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
 
   const handleRoleUpdate = async (memberId: string, newRole: string) => {
     try {
-      if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+      if (!globalThis.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
       await updateUserRole(memberId, newRole);
       const deptData = await getDepartmentLeave();
       setDepartments(deptData);
@@ -57,7 +57,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
 
   const handleDeptUpdate = async (memberId: string, newDeptId: string) => {
     try {
-      if (!window.confirm(`Are you sure you want to change this user's department?`)) return;
+      if (!globalThis.confirm(`Are you sure you want to change this user's department?`)) return;
       await updateUserDepartment(memberId, newDeptId);
       const deptData = await getDepartmentLeave();
       setDepartments(deptData);
@@ -138,8 +138,9 @@ const DepartmentLeaveDashboard: React.FC = () => {
                   ? Math.round((dept.totalUsed / dept.totalQuota) * 100)
                   : 0;
               return (
-                <div
+                <button
                   key={dept.id}
+                  type="button"
                   className={`dept-summary-card ${expandedDept === dept.id ? "active" : ""}`}
                   onClick={() =>
                     setExpandedDept(
@@ -165,12 +166,11 @@ const DepartmentLeaveDashboard: React.FC = () => {
                           strokeDasharray={`${usagePercent}, 100`}
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                           style={{
-                            stroke:
-                              usagePercent > 80
-                                ? "#ef4444"
-                                : usagePercent > 50
-                                  ? "#f59e0b"
-                                  : "#10b981",
+                            stroke: (() => {
+                              if (usagePercent > 80) return "#ef4444";
+                              if (usagePercent > 50) return "#f59e0b";
+                              return "#10b981";
+                            })(),
                           }}
                         />
                         <text x="18" y="20.35" className="percentage-text">
@@ -187,7 +187,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

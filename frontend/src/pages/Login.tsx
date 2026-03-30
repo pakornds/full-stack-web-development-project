@@ -44,7 +44,7 @@ const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleLogin = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -78,8 +78,8 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleForgotPassword: React.FormEventHandler<HTMLFormElement> = async (
-    e,
+  const handleForgotPassword = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
     setLoading(true);
@@ -100,8 +100,8 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleResetPassword: React.FormEventHandler<HTMLFormElement> = async (
-    e,
+  const handleResetPassword = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
     setLoading(true);
@@ -124,8 +124,8 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleTwoFactorVerify: React.FormEventHandler<HTMLFormElement> = async (
-    e,
+  const handleTwoFactorVerify = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
     setLoading(true);
@@ -165,7 +165,7 @@ const Login: React.FC = () => {
               type="text"
               value={twoFactorCode}
               onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                const val = e.target.value.replaceAll(/\D/g, "").slice(0, 6);
                 setTwoFactorCode(val);
               }}
               placeholder="000000"

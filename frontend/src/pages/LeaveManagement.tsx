@@ -51,7 +51,7 @@ const LeaveManagement: React.FC = () => {
       setUserDept(userData.department?.name || "");
       setLeaves(leavesData);
       setLeaveTypes(typesData);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load data. Please log in again.");
       navigate("/login");
     } finally {
@@ -445,45 +445,44 @@ const LeaveManagement: React.FC = () => {
                                 </button>
                               </>
                             )}
-                          {isManagerOrAdmin &&
-                              leave.status === "Pending" && (
-                              <>
-                                <button
-                                  onClick={() =>
-                                    handleStatusUpdate(leave.id, "Approved")
-                                  }
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "var(--success)",
-                                    border: "1px solid var(--success)",
-                                    color: "white",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleStatusUpdate(leave.id, "Rejected")
-                                  }
-                                  style={{
-                                    padding: "6px 12px",
-                                    background: "var(--text-main)",
-                                    border: "1px solid var(--text-main)",
-                                    color: "white",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
+                          {isManagerOrAdmin && leave.status === "Pending" && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleStatusUpdate(leave.id, "Approved")
+                                }
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "var(--success)",
+                                  border: "1px solid var(--success)",
+                                  color: "white",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleStatusUpdate(leave.id, "Rejected")
+                                }
+                                style={{
+                                  padding: "6px 12px",
+                                  background: "var(--text-main)",
+                                  border: "1px solid var(--text-main)",
+                                  color: "white",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

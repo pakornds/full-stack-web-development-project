@@ -88,7 +88,7 @@ export const disableTwoFactor = async (
 };
 
 export const loginWithGoogle = () => {
-  window.location.href = "http://localhost:3000/auth/google";
+  globalThis.location.href = "http://localhost:3000/auth/google";
   return Promise.resolve({} as UserData);
 };
 

@@ -131,12 +131,7 @@ const PersonalLeaveDashboard: React.FC = () => {
                       className="quota-bar-fill"
                       style={{
                         width: `${percentage}%`,
-                        background:
-                          percentage > 80
-                            ? "linear-gradient(90deg, #ef4444, #f87171)"
-                            : percentage > 50
-                              ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
-                              : "linear-gradient(90deg, #10b981, #34d399)",
+                        background: (() => {\n                          if (percentage > 80) return \"linear-gradient(90deg, #ef4444, #f87171)\";\n                          if (percentage > 50) return \"linear-gradient(90deg, #f59e0b, #fbbf24)\";\n                          return \"linear-gradient(90deg, #10b981, #34d399)\";\n                        })(),
                       }}
                     />
                   </div>

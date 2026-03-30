@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logoutUser } from "../services/authService";
 
@@ -13,11 +13,13 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
   const location = useLocation();
   const path = location.pathname;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [prevPath, setPrevPath] = useState(path);
 
-  // Close sidebar on route change
-  useEffect(() => {
+  // Close sidebar when route changes (derived state pattern per React docs)
+  if (prevPath !== path) {
+    setPrevPath(path);
     setIsSidebarOpen(false);
-  }, [location.pathname]);
+  }
 
   const handleLogout = async () => {
     try {
@@ -44,7 +46,14 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
       </div>
 
       {/* Mobile Overlay */}
-      {isSidebarOpen && <div className="mobile-overlay" onClick={closeSidebar}></div>}
+      {isSidebarOpen && (
+        <button
+          type="button"
+          className="mobile-overlay"
+          aria-label="Close sidebar"
+          onClick={closeSidebar}
+        />
+      )}
 
       {/* Sidebar */}
       <nav className={`leave-sidebar ${isSidebarOpen ? "mobile-open" : ""}`}>
@@ -58,8 +67,7 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
             className={`sidebar-link ${path.startsWith("/dashboard/personal") ? "active" : ""}`}
             onClick={() => navigate("/dashboard/personal")}
           >
-            <span className="link-icon">👤</span>
-            My Leave
+            <span className="link-icon">👤</span>{" "}My Leave
           </button>
 
           {(userRole === "manager" || userRole === "admin") && (
@@ -67,8 +75,7 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
               className={`sidebar-link ${path === "/dashboard/department" ? "active" : ""}`}
               onClick={() => navigate("/dashboard/department")}
             >
-              <span className="link-icon">🏢</span>
-              Department
+              <span className="link-icon">🏢</span>{" "}Department
             </button>
           )}
 
@@ -77,8 +84,7 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
               className={`sidebar-link ${path === "/dashboard/logs" ? "active" : ""}`}
               onClick={() => navigate("/dashboard/logs")}
             >
-              <span className="link-icon">📊</span>
-              Leave Logs
+              <span className="link-icon">📊</span>{" "}Leave Logs
             </button>
           )}
         </div>
@@ -88,12 +94,10 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
             onClick={() => navigate("/dashboard")}
             style={{ display: "none" }} // Hidden since we replaced Dashboard completely
           >
-            <span className="link-icon">🏠</span>
-            Dashboard
+            <span className="link-icon">🏠</span>{" "}Dashboard
           </button>
           <button className="sidebar-link logout" onClick={handleLogout}>
-            <span className="link-icon">🚪</span>
-            Logout
+            <span className="link-icon">🚪</span>{" "}Logout
           </button>
         </div>
       </nav>

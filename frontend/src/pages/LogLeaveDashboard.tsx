@@ -73,7 +73,7 @@ const LogLeaveDashboard: React.FC = () => {
   // Get unique departments for filter
   const uniqueDepts = [
     ...new Set(logs.map((l) => l.requester.department)),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
 
   // Filter logic
   const filteredLogs = logs.filter((log) => {
@@ -280,10 +280,16 @@ const LogLeaveDashboard: React.FC = () => {
 
       {/* Detail Modal */}
       {showModal && selectedLog && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
+        <>
+          <button
+            type="button"
+            className="modal-overlay"
+            aria-label="Close modal"
+            onClick={() => setShowModal(false)}
+          />
+          <dialog
             className="modal-content slide-down"
-            onClick={(e) => e.stopPropagation()}
+            open
           >
             <button
               className="modal-close"
@@ -409,8 +415,8 @@ const LogLeaveDashboard: React.FC = () => {
                 </button>
               </div>
             )}
-          </div>
-        </div>
+          </dialog>
+        </>
       )}
     </LeaveLayout>
   );

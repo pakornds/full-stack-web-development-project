@@ -52,7 +52,7 @@ const TwoFactorSetup: React.FC = () => {
     }
   };
 
-  const handleEnable = async (e: React.FormEvent) => {
+  const handleEnable = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -74,7 +74,7 @@ const TwoFactorSetup: React.FC = () => {
     }
   };
 
-  const handleDisable = async (e: React.FormEvent) => {
+  const handleDisable = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -159,7 +159,7 @@ const TwoFactorSetup: React.FC = () => {
                 type="text"
                 value={code}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  const val = e.target.value.replaceAll(/\D/g, "").slice(0, 6);
                   setCode(val);
                 }}
                 placeholder="Enter 6-digit code"
@@ -217,7 +217,7 @@ const TwoFactorSetup: React.FC = () => {
                 type="text"
                 value={disableCode}
                 onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  const val = e.target.value.replaceAll(/\D/g, "").slice(0, 6);
                   setDisableCode(val);
                 }}
                 placeholder="Enter 6-digit code"

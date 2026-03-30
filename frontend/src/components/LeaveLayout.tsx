@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logoutUser } from "../services/authService";
 
@@ -12,6 +12,12 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -22,13 +28,30 @@ const LeaveLayout: React.FC<LeaveLayoutProps> = ({ children, userRole, departmen
     }
   };
 
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="leave-page">
+      {/* Mobile Top Bar */}
+      <div className="mobile-top-bar">
+        <div className="mobile-brand">
+          <span className="brand-icon">📋</span>
+          <span className="brand-text">Leave Portal</span>
+        </div>
+        <button className="burger-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+          ☰
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isSidebarOpen && <div className="mobile-overlay" onClick={closeSidebar}></div>}
+
       {/* Sidebar */}
-      <nav className="leave-sidebar">
+      <nav className={`leave-sidebar ${isSidebarOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-brand">
           <span className="brand-icon">📋</span>
           <span className="brand-text">Leave Portal</span>
+          <button className="mobile-close-btn" onClick={closeSidebar}>✕</button>
         </div>
         <div className="sidebar-nav">
           <button

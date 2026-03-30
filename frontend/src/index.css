@@ -1502,27 +1502,46 @@ body {
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .leave-page {
+    flex-direction: column;
+  }
+
   .leave-sidebar {
-    width: 70px;
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100vh;
+    z-index: 100;
+    transition: left 0.3s ease-in-out;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    /* reset the styles that were squishing it */
+    display: flex;
+  }
+
+  .leave-sidebar.mobile-open {
+    left: 0;
   }
 
   .brand-text,
   .sidebar-link span:not(.link-icon) {
-    display: none;
+    display: inline-block;
   }
 
   .sidebar-link {
-    justify-content: center;
-    padding: 12px 0;
+    justify-content: flex-start;
+    padding: 12px 20px;
   }
 
   .sidebar-brand {
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 20px;
   }
 
   .leave-main {
-    margin-left: 70px;
+    margin-left: 0;
     padding: 24px;
+    width: 100%;
   }
 
   .form-row {
@@ -1535,31 +1554,21 @@ body {
 
   .filter-row {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .search-box input {
-    width: 100%;
-  }
-
+  .search-box input,
   .filter-select {
     width: 100%;
   }
 }
 
 @media (max-width: 640px) {
-  .leave-sidebar {
-    display: none;
-  }
-
   .leave-main {
-    margin-left: 0;
     padding: 16px;
   }
 
-  .quota-grid {
-    grid-template-columns: 1fr;
-  }
-
+  .quota-grid,
   .dept-summary-grid {
     grid-template-columns: 1fr;
   }
@@ -1571,5 +1580,69 @@ body {
   .leave-header {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* Mobile top bar and burger menu */
+.mobile-top-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.burger-menu-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-main);
+  margin-left: auto;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+}
+
+@media (max-width: 1024px) {
+  .mobile-top-bar {
+    display: flex;
+  }
+
+  .mobile-close-btn {
+    display: block;
+  }
+
+  .mobile-overlay {
+    display: block;
   }
 }

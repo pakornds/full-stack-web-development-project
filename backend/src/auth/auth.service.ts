@@ -329,8 +329,8 @@ export class AuthService {
     if (smtpHost) {
       transporter = nodemailer.createTransport({
         host: smtpHost,
-        port: this.configService.get<number>('SMTP_PORT') || 587,
-        secure: this.configService.get<string>('SMTP_SECURE') === 'true',
+        port: this.configService.get<number>('SMTP_PORT') || 465,
+        secure: this.configService.get<string>('SMTP_SECURE') !== 'false',
         auth: {
           user: this.configService.get<string>('SMTP_USER'),
           pass: this.configService.get<string>('SMTP_PASS'),
@@ -341,8 +341,8 @@ export class AuthService {
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: {
           user: testAccount.user,
           pass: testAccount.pass,

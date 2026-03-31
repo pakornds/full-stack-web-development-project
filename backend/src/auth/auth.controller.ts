@@ -110,7 +110,7 @@ export class AuthController {
   }
 
   // ─── Profile & Dashboards ─────────────────────────────────
-
+  // Retrieve the current logged-in user's profile information, specifically their role and department.
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async getProfile(@Req() req: AuthenticatedRequest) {

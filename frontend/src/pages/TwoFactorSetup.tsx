@@ -114,7 +114,11 @@ const TwoFactorSetup: React.FC = () => {
         <div
           className={`twofa-status ${user?.twoFactorEnabled ? "twofa-enabled" : "twofa-disabled"}`}
         >
-          {user?.twoFactorEnabled ? "✅ Enabled" : "❌ Disabled"}
+          {user?.twoFactorEnabled ? (
+            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}><path d="M20 6L9 17l-5-5"/></svg> Enabled</>
+          ) : (
+            <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}><path d="M18 6L6 18M6 6l12 12"/></svg> Disabled</>
+          )}
         </div>
 
         {message && <div className="twofa-success-box">{message}</div>}

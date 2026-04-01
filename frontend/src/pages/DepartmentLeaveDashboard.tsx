@@ -122,7 +122,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
             <input
               type="text"
               id="dept-search"
-              placeholder="🔍 Search by name or email..."
+                placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

@@ -38,7 +38,7 @@ export class UpdateLeaveDto {
 
 export class UpdateLeaveStatusDto {
   @IsString()
-  @IsEnum(['Approved', 'Rejected'])
+  @IsEnum(['Approved', 'Rejected', 'approved', 'rejected'])
   @IsNotEmpty()
   status!: string;
 }

@@ -131,12 +131,11 @@ const PersonalLeaveDashboard: React.FC = () => {
                       className="quota-bar-fill"
                       style={{
                         width: `${percentage}%`,
-                        background:
-                          percentage > 80
-                            ? "linear-gradient(90deg, #ef4444, #f87171)"
-                            : percentage > 50
-                              ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
-                              : "linear-gradient(90deg, #10b981, #34d399)",
+                        background: (() => {
+                          if (percentage > 80) return "linear-gradient(90deg, #ef4444, #f87171)";
+                          if (percentage > 50) return "linear-gradient(90deg, #f59e0b, #fbbf24)";
+                          return "linear-gradient(90deg, #10b981, #34d399)";
+                        })(),
                       }}
                     />
                   </div>
@@ -152,7 +151,9 @@ const PersonalLeaveDashboard: React.FC = () => {
           <h2 className="section-title">Leave History</h2>
           {data.leaveHistory.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-icon">📭</span>
+              <svg className="empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto", display: "block", marginBottom: "12px", color: "var(--text-muted)" }}>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
               <p>No leave requests yet</p>
             </div>
           ) : (

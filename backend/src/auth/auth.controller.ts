@@ -19,8 +19,8 @@ import {
   ResetPasswordDto,
 } from './dto/auth.dto';
 import { ConfigService } from '@nestjs/config';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
+
+import { PrismaService } from '../prisma/prisma.service';
 
 interface AuthenticatedRequest extends Request {
   user: { email: string; name: string; id: string; role: string };
@@ -31,6 +31,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   // ─── Cookie Helpers ────────────────────────────────────────
@@ -109,87 +110,23 @@ export class AuthController {
   }
 
   // ─── Profile & Dashboards ─────────────────────────────────
-
+  // Retrieve the current logged-in user's profile information, specifically their role and department.
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async getProfile(@Req() req: AuthenticatedRequest) {
-    const user = await this.authService['prisma'].user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: req.user.id },
-      include: { department: true }
+      include: { department: true },
     });
     return {
       user: {
         ...req.user,
         department: {
           id: user?.department?.id,
-          name: user?.department?.name
-        }
+          name: user?.department?.name,
+        },
       },
       message: 'You are authenticated',
-    };
-  }
-
-  @Get('dashboard/admin')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
-  getAdminDashboard(@Req() req: AuthenticatedRequest) {
-    return {
-      user: req.user,
-      stats: {
-        description: 'Full system access',
-        permissions: ['manage_users', 'view_logs', 'system_config'],
-      },
-      message: 'Welcome to the Admin Dashboard',
-    };
-  }
-
-  @Get('dashboard/manager')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('manager')
-  getManagerDashboard(@Req() req: AuthenticatedRequest) {
-    return {
-      user: req.user,
-      stats: {
-        description: 'Manager access',
-        permissions: ['view_logs', 'api_access', 'debug_mode'],
-        apiUptime: process.uptime().toFixed(2) + 's',
-        nodeVersion: process.version,
-        environment: process.env.NODE_ENV || 'development',
-      },
-      message: 'Welcome to the Manager Dashboard',
-    };
-  }
-
-  @Get('dashboard/hr')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('manager')
-  getHrDashboard(@Req() req: AuthenticatedRequest) {
-    return {
-      user: req.user,
-      stats: {
-        description: 'HR access',
-        permissions: [
-          'view_profile',
-          'edit_profile',
-          'manage_department_leave',
-          'approve_leave',
-        ],
-      },
-      message: 'Welcome to the HR Dashboard',
-    };
-  }
-
-  @Get('dashboard/employee')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('employee', 'manager', 'admin')
-  getEmployeeDashboard(@Req() req: AuthenticatedRequest) {
-    return {
-      user: req.user,
-      stats: {
-        description: 'Standard user access',
-        permissions: ['view_profile', 'edit_profile'],
-      },
-      message: 'Welcome to your Dashboard',
     };
   }
 

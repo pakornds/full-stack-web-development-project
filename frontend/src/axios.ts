@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
+// axios instead of fetch for built-in interceptors
 const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
   withCredentials: true, // causes the browser to automatically attach cookies (including the jwt cookie) to every request.
 });
 
@@ -33,33 +34,30 @@ api.interceptors.response.use(
 
     if (
       !originalConfig ||
-      !error.response ||
-      error.response.status !== 401 ||
+      error.response?.status !== 401 ||
       originalConfig._retry ||
       shouldSkipAutoRefresh(originalConfig)
     ) {
-      return Promise.reject(error);
+      throw error;
     }
 
     // if the retried request 401s again, it will not refresh again.
     originalConfig._retry = true;
 
     try {
-      if (!refreshPromise) {
-        refreshPromise = api
-          .post("/auth/refresh")
-          .then(() => undefined)
-          .finally(() => {
-            refreshPromise = null;
-          });
-      }
+      refreshPromise ??= api
+        .post("/auth/refresh")
+        .then(() => undefined)
+        .finally(() => {
+          refreshPromise = null;
+        });
 
       await refreshPromise;
       // Retry the original request
       return api(originalConfig);
     } catch (refreshError) {
-      window.location.href = "/login?expired=1";
-      return Promise.reject(refreshError);
+      globalThis.location.href = "/login?expired=1";
+      throw refreshError;
     }
   },
 );

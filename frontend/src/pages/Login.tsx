@@ -35,6 +35,7 @@ const Login: React.FC = () => {
     try {
       await loginWithGoogle();
     } catch (err) {
+      console.error(err);
       setError("Google login failed");
     }
   };
@@ -43,7 +44,7 @@ const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -77,7 +78,9 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleForgotPassword = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -86,14 +89,20 @@ const Login: React.FC = () => {
       const res = await forgotPassword(forgotEmail);
       setMessage(res.message);
       setView("reset");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send reset link.");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to send reset link.");
+      } else {
+        setError("Failed to send reset link.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleResetPassword = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -104,14 +113,20 @@ const Login: React.FC = () => {
       setResetToken("");
       setNewPassword("");
       setView("login");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password.");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to reset password.");
+      } else {
+        setError("Failed to reset password.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTwoFactorVerify = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleTwoFactorVerify = async (
+    e: React.SyntheticEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -150,7 +165,7 @@ const Login: React.FC = () => {
               type="text"
               value={twoFactorCode}
               onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                const val = e.target.value.replaceAll(/\D/g, "").slice(0, 6);
                 setTwoFactorCode(val);
               }}
               placeholder="000000"
@@ -204,38 +219,113 @@ const Login: React.FC = () => {
           <>
             <h1>Reset Password</h1>
             <p>Enter the token from your email and your new password.</p>
-            <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "10px" }}>
+            <p
+              style={{
+                fontSize: "12px",
+                color: "var(--text-muted)",
+                marginBottom: "10px",
+              }}
+            >
               (Check backend console for the demo reset token)
             </p>
           </>
         )}
 
-        {message && <div style={{ background: "#d4edda", color: "#155724", padding: "10px", borderRadius: "4px", marginBottom: "15px" }}>{message}</div>}
+        {message && (
+          <div
+            style={{
+              background: "#d4edda",
+              color: "#155724",
+              padding: "10px",
+              borderRadius: "4px",
+              marginBottom: "15px",
+            }}
+          >
+            {message}
+          </div>
+        )}
         {error && <div className="login-error-box">{error}</div>}
 
         {view === "login" && (
           <>
-            <button onClick={handleGoogleLogin} type="button" className="google-btn" style={{ marginBottom: "20px" }}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google Logo" />
-              Continue with Google
+            <button
+              onClick={handleGoogleLogin}
+              type="button"
+              className="google-btn"
+              style={{ marginBottom: "20px" }}
+            >
+              <img
+                src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg"
+                alt="Google Logo"
+              />
+              <span>Continue with Google</span>
             </button>
 
-            <div className="divider"><span>OR</span></div>
+            <div className="divider">
+              <span>OR</span>
+            </div>
 
             <form onSubmit={handleLogin} className="register-form">
-              <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
-              <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? "Signing In..." : "Sign In"}
               </button>
             </form>
 
-            <div style={{ marginTop: "20px", display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
+            <div
+              style={{
+                marginTop: "20px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "10px",
+                fontSize: "14px",
+              }}
+            >
               <div>
-                Don't have an account? {' '}
-                <Link to="/register" style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600 }}>Create one</Link>
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  style={{
+                    color: "var(--primary)",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  Create one
+                </Link>
               </div>
-              <button type="button" onClick={() => { setView("forgot"); setError(""); setMessage(""); }} style={{ background: "none", border: "none", color: "var(--primary)", fontWeight: 600, cursor: "pointer", padding: 0 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setView("forgot");
+                  setError("");
+                  setMessage("");
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--primary)",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
                 Forgot Password?
               </button>
             </div>
@@ -244,11 +334,32 @@ const Login: React.FC = () => {
 
         {view === "forgot" && (
           <form onSubmit={handleForgotPassword} className="register-form">
-            <input type="email" placeholder="Email Address" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required />
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              required
+            />
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? "Sending..." : "Send Reset Link"}
             </button>
-            <button type="button" onClick={() => { setView("login"); setError(""); setMessage(""); }} style={{ background: "none", border: "none", color: "var(--text-muted)", marginTop: "10px", cursor: "pointer", textDecoration: "underline" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setView("login");
+                setError("");
+                setMessage("");
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-muted)",
+                marginTop: "10px",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
               Back to Login
             </button>
           </form>
@@ -256,17 +367,43 @@ const Login: React.FC = () => {
 
         {view === "reset" && (
           <form onSubmit={handleResetPassword} className="register-form">
-            <input type="text" placeholder="Reset Token" value={resetToken} onChange={(e) => setResetToken(e.target.value)} required />
-            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+            <input
+              type="text"
+              placeholder="Reset Token"
+              value={resetToken}
+              onChange={(e) => setResetToken(e.target.value)}
+              required
+            />
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? "Resetting..." : "Reset Password"}
             </button>
-            <button type="button" onClick={() => { setView("login"); setError(""); setMessage(""); }} style={{ background: "none", border: "none", color: "var(--text-muted)", marginTop: "10px", cursor: "pointer", textDecoration: "underline" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setView("login");
+                setError("");
+                setMessage("");
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-muted)",
+                marginTop: "10px",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
               Back to Login
             </button>
           </form>
         )}
-
       </div>
     </div>
   );

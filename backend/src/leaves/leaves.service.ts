@@ -10,7 +10,7 @@ import sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 export class LeavesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, data: CreateLeaveDto) {
     const cleanReason = sanitizeHtml(data.reason, {
@@ -53,6 +53,29 @@ export class LeavesService {
     return this.prisma.leaveRequest.findMany({
       where: { userId },
       include: {
+        user: {
+          select: { name: true, email: true },
+        },
+        approvedBy: {
+          select: { name: true, email: true },
+        },
+        leaveType: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findByDepartmentId(departmentId: string) {
+    return this.prisma.leaveRequest.findMany({
+      where: {
+        user: {
+          departmentId,
+        },
+      },
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
         approvedBy: {
           select: { name: true, email: true },
         },

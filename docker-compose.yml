@@ -1,4 +1,17 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: fsd-postgres
+    restart: always
+    env_file:
+      - ./backend/.env.production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -6,10 +19,11 @@ services:
     container_name: fsd-backend
     ports:
       - "3000:3000"
+      - "5555:5555"
     env_file:
-      - ./backend/.env
-    volumes:
-      - ./backend/prisma/dev.db:/app/prisma/dev.db
+      - ./backend/.env.production
+    depends_on:
+      - db
     environment:
       PORT: 3000
     networks:
@@ -27,6 +41,26 @@ services:
     networks:
       - app-network
 
+  # sonarqube:
+  #   image: sonarqube:community
+  #   container_name: fsd-sonarqube
+  #   ports:
+  #     - "9000:9000"
+  #   environment:
+  #     SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+  #   volumes:
+  #     - sonarqube_data:/opt/sonarqube/data
+  #     - sonarqube_logs:/opt/sonarqube/logs
+  #     - sonarqube_extensions:/opt/sonarqube/extensions
+  #   networks:
+  #     - app-network
+
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:

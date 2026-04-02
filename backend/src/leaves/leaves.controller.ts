@@ -10,6 +10,7 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
+
 import { LeavesService } from './leaves.service';
 import {
   CreateLeaveDto,
@@ -20,6 +21,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
+interface UserRequest {
+  user: {
+    id: string;
+    role: string;
+    departmentId?: string;
+  };
+}
+
 // applies to EVERY route in the Leave API
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('leaves')
@@ -28,15 +37,21 @@ export class LeavesController {
 
   @Roles('employee', 'manager', 'admin')
   @Post()
-  create(@Request() req, @Body() createLeaveDto: CreateLeaveDto) {
+  create(@Request() req: UserRequest, @Body() createLeaveDto: CreateLeaveDto) {
     return this.leavesService.create(req.user.id, createLeaveDto);
   }
 
   @Roles('employee', 'manager', 'admin')
   @Get()
-  findAll(@Request() req) {
+  findAll(@Request() req: UserRequest) {
     if (req.user.role === 'employee') {
       return this.leavesService.findByUserId(req.user.id);
+    }
+    if (req.user.role === 'manager') {
+      if (!req.user.departmentId) {
+        return this.leavesService.findByUserId(req.user.id);
+      }
+      return this.leavesService.findByDepartmentId(req.user.departmentId);
     }
     return this.leavesService.findAll();
   }
@@ -44,7 +59,7 @@ export class LeavesController {
   @Roles('employee', 'manager', 'admin')
   @Put(':id')
   update(
-    @Request() req,
+    @Request() req: UserRequest,
     @Param('id') id: string,
     @Body() updateLeaveDto: UpdateLeaveDto,
   ) {
@@ -58,14 +73,14 @@ export class LeavesController {
 
   @Roles('employee', 'manager', 'admin')
   @Delete(':id')
-  remove(@Request() req, @Param('id') id: string) {
+  remove(@Request() req: UserRequest, @Param('id') id: string) {
     return this.leavesService.remove(id, req.user.id, req.user.role);
   }
 
   @Roles('manager', 'admin')
   @Patch(':id/status')
   updateStatus(
-    @Request() req,
+    @Request() req: UserRequest,
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateLeaveStatusDto,
   ) {

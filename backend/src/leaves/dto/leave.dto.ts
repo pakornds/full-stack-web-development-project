@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsDateString, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, IsEnum } from 'class-validator';
 
 export class CreateLeaveDto {
   @IsDateString()
@@ -38,7 +38,7 @@ export class UpdateLeaveDto {
 
 export class UpdateLeaveStatusDto {
   @IsString()
-  @IsIn(['Approved', 'Rejected', 'approved', 'rejected'])
+  @IsEnum(['Approved', 'Rejected', 'approved', 'rejected'])
   @IsNotEmpty()
   status!: string;
 }

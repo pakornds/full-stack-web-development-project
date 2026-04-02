@@ -14,7 +14,7 @@ async function bootstrap() {
 
   // Setup CORS to allow cross-origin requests with credentials (cookies)
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'https://leaveportal.cc',
     credentials: true, // Without this CORS setting, the browser would block cookie-based cross-origin auth.
   });
 

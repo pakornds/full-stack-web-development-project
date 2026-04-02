@@ -73,7 +73,7 @@ const LogLeaveDashboard: React.FC = () => {
   // Get unique departments for filter
   const uniqueDepts = [
     ...new Set(logs.map((l) => l.requester.department)),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
 
   // Filter logic
   const filteredLogs = logs.filter((log) => {
@@ -160,7 +160,7 @@ const LogLeaveDashboard: React.FC = () => {
               <input
                 type="text"
                 id="log-search"
-                placeholder="🔍 Search by name, email, or leave type..."
+                placeholder="Search by name, email, or leave type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -196,7 +196,9 @@ const LogLeaveDashboard: React.FC = () => {
         <section className="logs-table-section">
           {filteredLogs.length === 0 ? (
             <div className="empty-state">
-              <span className="empty-icon">📭</span>
+              <svg className="empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto", display: "block", marginBottom: "12px", color: "var(--text-muted)" }}>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
               <p>No matching leave requests found</p>
             </div>
           ) : (
@@ -280,10 +282,16 @@ const LogLeaveDashboard: React.FC = () => {
 
       {/* Detail Modal */}
       {showModal && selectedLog && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div
+        <>
+          <button
+            type="button"
+            className="modal-overlay"
+            aria-label="Close modal"
+            onClick={() => setShowModal(false)}
+          />
+          <dialog
             className="modal-content slide-down"
-            onClick={(e) => e.stopPropagation()}
+            open
           >
             <button
               className="modal-close"
@@ -295,7 +303,7 @@ const LogLeaveDashboard: React.FC = () => {
 
             <div className="modal-detail-grid">
               <div className="detail-section">
-                <h4>👤 Requester</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Requester</h4>
                 <div className="detail-row">
                   <span className="detail-label">Name</span>
                   <span className="detail-value">
@@ -323,7 +331,7 @@ const LogLeaveDashboard: React.FC = () => {
               </div>
 
               <div className="detail-section">
-                <h4>📅 Leave Details</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Leave Details</h4>
                 <div className="detail-row">
                   <span className="detail-label">Type</span>
                   <span className="detail-value type-badge">
@@ -357,7 +365,7 @@ const LogLeaveDashboard: React.FC = () => {
               </div>
 
               <div className="detail-section">
-                <h4>📋 Status</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'text-bottom', marginRight: '6px' }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>Status</h4>
                 <div className="detail-row">
                   <span className="detail-label">Status</span>
                   <span
@@ -409,8 +417,8 @@ const LogLeaveDashboard: React.FC = () => {
                 </button>
               </div>
             )}
-          </div>
-        </div>
+          </dialog>
+        </>
       )}
     </LeaveLayout>
   );

@@ -8,6 +8,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+RUN sed -i 's/\r$//' .env || true
 RUN npx prisma generate
 RUN npm run build
 

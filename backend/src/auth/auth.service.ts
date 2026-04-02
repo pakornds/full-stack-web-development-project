@@ -77,9 +77,7 @@ export class AuthService {
     let role = await this.prisma.role.findUnique({
       where: { name: 'employee' },
     });
-    if (!role) {
-      role = await this.prisma.role.create({ data: { name: 'employee' } });
-    }
+    role ??= await this.prisma.role.create({ data: { name: 'employee' } });
     return role.id;
   }
 
@@ -318,6 +316,7 @@ export class AuthService {
       name: user.name,
       id: user.id,
       role: user.role.name,
+      departmentId: user.departmentId,
       sessionId: user.currentSessionId,
       twoFactorEnabled: user.twoFactorEnabled,
     };
@@ -330,8 +329,8 @@ export class AuthService {
     if (smtpHost) {
       transporter = nodemailer.createTransport({
         host: smtpHost,
-        port: this.configService.get<number>('SMTP_PORT') || 587,
-        secure: this.configService.get<string>('SMTP_SECURE') === 'true',
+        port: this.configService.get<number>('SMTP_PORT') || 465,
+        secure: this.configService.get<string>('SMTP_SECURE') !== 'false',
         auth: {
           user: this.configService.get<string>('SMTP_USER'),
           pass: this.configService.get<string>('SMTP_PASS'),
@@ -342,8 +341,8 @@ export class AuthService {
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
+        port: 465,
+        secure: true,
         auth: {
           user: testAccount.user,
           pass: testAccount.pass,
@@ -351,23 +350,23 @@ export class AuthService {
       } as nodemailer.TransportOptions);
     }
 
-    const info = await transporter.sendMail({
+    const info = (await transporter.sendMail({
       from: '"Leave Management System" <noreply@leave.com>',
       to: email,
       subject: 'Password Reset Token',
       text: `You requested a password reset. Your reset token is: ${token}\n\nEnter this token on the password reset page.`,
       html: `<p>You requested a password reset.</p><p>Your reset token is: <strong>${token}</strong></p><p>Enter this token on the password reset page.</p>`,
-    });
+    })) as { messageId: string };
 
     console.log(
       `\n========= EMAIL SENT =========\nMessage sent: ${info.messageId}`,
     );
-    if (!smtpHost) {
-      console.log(
-        `Preview URL: ${nodemailer.getTestMessageUrl(info)}\n==============================\n`,
-      );
-    } else {
+    if (smtpHost) {
       console.log(`==============================\n`);
+    } else {
+      console.log(
+        `Preview URL: ${nodemailer.getTestMessageUrl(info as Parameters<typeof nodemailer.getTestMessageUrl>[0])}\n==============================\n`,
+      );
     }
   }
 
@@ -408,8 +407,7 @@ export class AuthService {
     });
 
     if (
-      !user ||
-      !user.resetPasswordExpiresAt ||
+      !user?.resetPasswordExpiresAt ||
       user.resetPasswordExpiresAt < new Date()
     ) {
       throw new BadRequestException('Invalid or expired reset token');

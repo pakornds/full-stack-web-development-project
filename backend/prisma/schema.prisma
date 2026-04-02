@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -34,6 +34,7 @@ model User {
   leaveQuotas           LeaveQuota[]
   leaves                LeaveRequest[] @relation("UserLeaves")
   approvedLeaves        LeaveRequest[] @relation("ApprovedLeaves")
+  eventLogs             EventLog[]
 }
 
 model Role {
@@ -92,4 +93,18 @@ model LeaveRequest {
   approvedBy   User?    @relation("ApprovedLeaves", fields: [approvedById], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model EventLog {
+  id          String   @id @default(uuid())
+  method      String
+  url         String
+  statusCode  Int?
+  userId      String?
+  ipAddress   String?
+  userAgent   String?
+  durationMs  Int?
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id])
 }

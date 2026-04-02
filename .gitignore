@@ -31,3 +31,12 @@ backend/prisma/dev.db
 backend/prisma/dev.db-journal
 backend/prisma/seed.ts
 
+Authorization_Design.md
+System_Architecture.md
+Comprehensive_API_Docs.md
+Auth_API_Sequence_Diagrams.md
+Leaves_API_Sequence_Diagrams.md
+Database_ER_Diagram.md
+Leave_API_Sequence_Diagrams.md
+
+issues.csv

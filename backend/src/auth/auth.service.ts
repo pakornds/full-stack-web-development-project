@@ -83,21 +83,38 @@ export class AuthService {
 
   // Helper to assign default leave quotas for new users
   private async assignDefaultLeaveQuotas(userId: string): Promise<void> {
-    const leaveTypes = await this.prisma.leaveType.findMany();
-    if (leaveTypes.length === 0) return;
+    try {
+      const leaveTypes = await this.prisma.leaveType.findMany();
+      if (leaveTypes.length === 0) {
+        console.warn(`[assignDefaultLeaveQuotas] No leave types found to assign quotas for user ${userId}`);
+        return;
+      }
 
-    const currentYear = new Date().getFullYear();
-    const quotaData = leaveTypes.map((type) => ({
-      userId,
-      leaveTypeId: type.id,
-      year: currentYear,
-      totalDays: type.defaultDays,
-      usedDays: 0,
-    }));
-
-    await this.prisma.leaveQuota.createMany({
-      data: quotaData,
-    });
+      const currentYear = new Date().getFullYear();
+      
+      for (const type of leaveTypes) {
+        await this.prisma.leaveQuota.upsert({
+          where: {
+            userId_leaveTypeId_year: {
+              userId,
+              leaveTypeId: type.id,
+              year: currentYear,
+            },
+          },
+          update: {},
+          create: {
+            userId,
+            leaveTypeId: type.id,
+            year: currentYear,
+            totalDays: type.defaultDays,
+            usedDays: 0,
+          },
+        });
+      }
+      console.log(`[assignDefaultLeaveQuotas] Successfully created quotas for user ${userId}`);
+    } catch (error) {
+      console.error(`[assignDefaultLeaveQuotas] Failed to create quotas for user ${userId}:`, error);
+    }
   }
 
   // ─── Auth Methods ──────────────────────────────────────────

@@ -19,6 +19,7 @@ services:
     container_name: fsd-backend
     ports:
       - "3000:3000"
+      - "5555:5555"
     env_file:
       - ./backend/.env.production
     depends_on:

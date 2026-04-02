@@ -15,7 +15,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         'placeholder-client-secret',
       callbackURL:
         configService.get<string>('GOOGLE_CALLBACK_URL') ||
-        'http://localhost:3000/auth/google/callback',
+        'https://leaveportal.cc/api/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }

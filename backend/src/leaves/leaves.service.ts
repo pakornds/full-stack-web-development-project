@@ -148,12 +148,33 @@ export class LeavesService {
 
     const normalizedStatus = status.toLowerCase() === 'approved' ? 'approved' : 'rejected';
 
-    return this.prisma.leaveRequest.update({
-      where: { id },
-      data: {
-        status: normalizedStatus,
-        approvedById: approverId,
-      },
+    return this.prisma.$transaction(async (prisma) => {
+      const updatedRequest = await prisma.leaveRequest.update({
+        where: { id },
+        data: {
+          status: normalizedStatus,
+          approvedById: approverId,
+        },
+      });
+
+      if (normalizedStatus === 'approved') {
+        const days =
+          Math.ceil(
+            (leaveItem.endDate.getTime() - leaveItem.startDate.getTime()) /
+              (1000 * 60 * 60 * 24),
+          ) + 1;
+
+        await prisma.leaveQuota.updateMany({
+          where: {
+            userId: leaveItem.userId,
+            leaveTypeId: leaveItem.leaveTypeId,
+            year: leaveItem.startDate.getFullYear(),
+          },
+          data: { usedDays: { increment: days } },
+        });
+      }
+
+      return updatedRequest;
     });
   }
 }

@@ -88,7 +88,8 @@ export const disableTwoFactor = async (
 };
 
 export const loginWithGoogle = () => {
-  globalThis.location.href = "http://localhost:3000/auth/google";
+  const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  globalThis.location.href = `${baseURL}/auth/google`;
   return Promise.resolve({} as UserData);
 };
 

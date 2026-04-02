@@ -6,7 +6,7 @@ services:
     env_file:
       - ./backend/.env.production
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -18,8 +18,8 @@ services:
       dockerfile: Dockerfile
     container_name: fsd-backend
     ports:
-      - "3000:3000"
-      - "5555:5555"
+      - "192.168.0.12:3000:3000"
+      - "192.168.0.12:5555:5555"
     env_file:
       - ./backend/.env.production
     depends_on:
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile
     container_name: fsd-frontend
     ports:
-      - "5173:80"
+      - "192.168.0.12:5173:80"
     depends_on:
       - backend
     networks:

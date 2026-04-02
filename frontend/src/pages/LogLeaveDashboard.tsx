@@ -78,7 +78,7 @@ const LogLeaveDashboard: React.FC = () => {
   // Filter logic
   const filteredLogs = logs.filter((log) => {
     const statusMatch =
-      filterStatus === "all" || log.status === filterStatus;
+      filterStatus === "all" || log.status.toLowerCase() === filterStatus;
     const deptMatch =
       filterDept === "all" || log.requester.department === filterDept;
     const searchMatch =
@@ -90,10 +90,9 @@ const LogLeaveDashboard: React.FC = () => {
   });
 
   // Stats
-  const pendingCount = logs.filter((l) => l.status === "pending").length;
-  const approvedCount = logs.filter((l) => l.status === "approved").length;
-  const rejectedCount = logs.filter((l) => l.status === "rejected").length;
-
+    const pendingCount = logs.filter((l) => l.status.toLowerCase() === "pending").length;
+    const approvedCount = logs.filter((l) => l.status.toLowerCase() === "approved").length;
+    const rejectedCount = logs.filter((l) => l.status.toLowerCase() === "rejected").length;
   if (loading) {
     return (
       <div className="leave-page">
@@ -397,7 +396,7 @@ const LogLeaveDashboard: React.FC = () => {
               </div>
             </div>
 
-            {selectedLog.status === "pending" && (
+            {selectedLog.status.toLowerCase() === "pending" && (
               <div className="modal-actions">
                 <button
                   className="approve-btn"

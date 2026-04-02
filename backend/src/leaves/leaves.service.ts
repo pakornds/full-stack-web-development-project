@@ -91,7 +91,7 @@ export class LeavesService {
     });
     if (!leaveItem) throw new NotFoundException('Leave request not found');
 
-    if (leaveItem.status !== 'Pending') {
+    if (leaveItem.status.toLowerCase() !== 'pending') {
       throw new ForbiddenException('Only Pending requests can be modified');
     }
 
@@ -125,7 +125,7 @@ export class LeavesService {
     });
     if (!leaveItem) throw new NotFoundException('Leave request not found');
 
-    if (leaveItem.status !== 'Pending') {
+    if (leaveItem.status.toLowerCase() !== 'pending') {
       throw new ForbiddenException('Cannot delete finalized requests');
     }
 
@@ -141,16 +141,18 @@ export class LeavesService {
       where: { id },
     });
     if (!leaveItem) throw new NotFoundException('Leave request not found');
-    if (leaveItem.status !== 'Pending') {
+
+    if (leaveItem.status.toLowerCase() !== 'pending') {
       throw new ForbiddenException('Cannot edit a finalized request');
     }
+
+    const normalizedStatus = status.toLowerCase() === 'approved' ? 'approved' : 'rejected';
 
     return this.prisma.leaveRequest.update({
       where: { id },
       data: {
-        status,
-        approvedById:
-          status === 'Approved' || status === 'Rejected' ? approverId : null,
+        status: normalizedStatus,
+        approvedById: approverId,
       },
     });
   }

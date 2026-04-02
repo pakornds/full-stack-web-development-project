@@ -17,7 +17,8 @@ export const formatDateTime = (dateStr: string) => {
 };
 
 export const getStatusClass = (status: string) => {
-  switch (status) {
+  const lowercaseStatus = status?.trim().toLowerCase() || "pending";
+  switch (lowercaseStatus) {
     case "approved":
       return "status-approved";
     case "rejected":

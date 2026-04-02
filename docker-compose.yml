@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: fsd-postgres
-    restart: always
+    restart: unless-stopped
     env_file:
       - ./backend/.env.production
     ports:
@@ -17,6 +17,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fsd-backend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     env_file:
@@ -33,6 +34,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fsd-prisma-studio
+    restart: unless-stopped
     ports:
       - "5555:5555"
     env_file:
@@ -48,6 +50,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: fsd-frontend
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:

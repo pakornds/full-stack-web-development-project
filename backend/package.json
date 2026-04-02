@@ -92,6 +92,6 @@
     "testEnvironment": "node"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm prisma/seed.ts"
   }
 }

@@ -252,7 +252,7 @@ const TwoFactorSetup: React.FC = () => {
           </div>
         )}
 
-        <button onClick={() => navigate("/dashboard")} className="back-link-btn">
+        <button onClick={() => navigate("/dashboard/personal")} className="back-link-btn">
           ← Back to Dashboard
         </button>
       </div>

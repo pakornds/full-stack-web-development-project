@@ -248,7 +248,7 @@ export class AuthService {
     let payload: AuthTokenPayload;
 
     try {
-      payload = this.tokenService.verifyToken<AuthTokenPayload>(refreshToken);
+      payload = this.tokenService.verifyRefreshToken<AuthTokenPayload>(refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -285,7 +285,7 @@ export class AuthService {
     let payload: AuthTokenPayload | null = null;
     try {
       payload =
-        this.tokenService.verifyTokenIgnoringExpiry<AuthTokenPayload>(
+        this.tokenService.verifyRefreshTokenIgnoringExpiry<AuthTokenPayload>(
           refreshToken,
         );
     } catch {

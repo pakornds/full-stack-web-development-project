@@ -116,8 +116,13 @@ const DepartmentLeaveDashboard: React.FC = () => {
               <p className="header-subtitle">
                 Monitor leave usage across all departments
               </p>
-            </div>
-          </div>
+            </div>            <button
+                className="primary-action-btn"
+                onClick={() => navigate("/leave-management")}
+                style={{ marginLeft: "1rem" }}
+              >
+                Go to Leave Management
+            </button>          </div>
           <div className="search-box">
             <input
               type="text"

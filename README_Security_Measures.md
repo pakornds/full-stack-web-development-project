@@ -1,55 +1,55 @@
-# Security Measures (OWASP Top 10 Mapping)
+# มาตรการรักษาความปลอดภัย (อ้างอิงตาม OWASP Top 10)
 
-This project has been developed with a "Security by Design" approach, ensuring that critical vulnerabilities are mitigated natively within the application's core architecture. The following document maps the project's security implementations directly to the **OWASP Top 10 (2021)** web application security risks.
+โปรเจกต์นี้ได้รับการพัฒนาโดยเน้นแนวคิด "Security by Design" (ความปลอดภัยตั้งแต่การออกแบบ) เพื่อให้มั่นใจว่าช่องโหว่ที่สำคัญจะถูกป้องกันและจัดการตั้งแต่ระดับโครงสร้างหลักของแอปพลิเคชัน เอกสารนี้เป็นการเชื่อมโยงมาตรการรักษาความปลอดภัยของระบบเข้ากับความเสี่ยงเด่นๆ ของเว็บแอปพลิเคชันตามมาตรฐาน **OWASP Top 10 ปี 2021**
 
 ---
 
-## 🛡️ OWASP Top 10 Mapping
+## 🛡️ การอ้างอิงมาตรฐาน OWASP Top 10
 
-### A01:2021 - Broken Access Control
-Access control ensures that users act only within their intended permissions.
-- **Role-Based Access Control (RBAC):** Utilizing NestJS `@Roles()` decorators and custom `RolesGuard` to strict-check authorization. Endpoints are context-aware (e.g., an Employee cannot view other departments' leaves unless they hold a Manager/Admin role).
-- **Service-Level Verification:** Object-level authorization checks are explicitly handled in the `LeavesService`. For example, employees are strictly enforced to only `update` or `remove` their own leave requests, and actions are blocked if the status is not `pending`.
-- **CORS Configuration:** Strictly configured in `main.ts` with defined `origin` targets mapping to specific frontend URLs alongside `credentials: true`. 
+### A01:2021 - Broken Access Control (การควบคุมสิทธิ์ที่บกพร่อง)
+ป้องกันมิให้ผู้ใช้สามารถทำสิ่งที่อยู่นอกเหนือสิทธิ์ที่ได้รับ
+- **การควบคุมสิทธิ์ตามบทบาท (RBAC):** มีการใช้ `@Roles()` decorator ใน NestJS ควบคู่กับ custom `RolesGuard` เคร่งครัด เพื่อตรวจสอบสิทธิ์ในแต่ละ Endpoint (เช่น พนักงานปกติไม่สามารถดูคำขอลาของแผนกอื่นได้นอกจากจะมีสิทธิ์เป็นผู้จัดการหรือแอดมิน)
+- **การตรวจสอบระดับ Service:** ภายใน `LeavesService` จะมีการป้องกันในระดับตรรกะของอ็อบเจ็กต์อีกชั้น เช่น พนักงานจะได้รับอนุญาตให้ใช้คำสั่ง `update` หรือ `remove` ได้เฉพาะคำขอร้องของตนเองเท่านั้น และจะถูกปฏิเสธทันทีหากสถานะไม่ได้เป็น `pending`
+- **การจัดการ CORS:** ถูกตั้งค่าอย่างรัดกุมใน `main.ts` โดยระบุ `origin` เฉพาะเจาะจงที่ชี้ไปยัง Frontend URL ควบคู่กับการอนุญาตแบบ `credentials: true`
 
-### A02:2021 - Cryptographic Failures
-Protecting sensitive data at rest and in transit.
-- **Password Hashing:** Passwords are never stored in plaintext. They are mathematically dispersed using **Argon2**, an award-winning highly secure key derivation function over older methods like bcrypt.
-- **2FA / MFA Support:** Multi-factor authentication mechanisms are integrated using `otplib` and `qrcode` to provide Time-based One-Time Passwords (TOTP). This mitigates risks in credential stuffing or stolen passwords.
-- **JWT Standard:** Industry-standard JSON Web Tokens (JWT) are cryptographically signed using secure secrets (`@nestjs/jwt`), preventing payload manipulation in transit.
+### A02:2021 - Cryptographic Failures (ความล้มเหลวทางคริปโทกราฟี/การเข้ารหัส)
+ปกป้องข้อมูลที่ละเอียดอ่อนทั้งระหว่างเก็บและระหว่างการย้ายโอน
+- **การเข้ารหัสรหัสผ่าน (Password Hashing):** ไม่มีการเก็บรหัสผ่านในรูปแบบตัวอักษรธรรมดาอย่างเด็ดขาด แต่ใช้ **Argon2** ซึ่งเป็นเทคนิคการเข้ารหัสและกระจายค่าแฮชที่แน่นหนาและได้รับการยอมรับว่าปลอดภัยกว่า bcrypt
+- **การยืนยันตัวตนสองขั้นตอน (2FA / MFA):** ระบบรองรับการตั้งค่าการยืนยันตัวตนสองชั้นผ่าน `otplib` และรูปแบบ Time-based One-Time Passwords (TOTP) ช่วยลดความเสี่ยงจากการขโมยรหัสผ่าน (Credential Stuffing)
+- **มาตรฐานข้อมูล JWT:** ใช้ JSON Web Tokens (JWT) ในการระบุตัวตน ซึ่ง Token ทุกชุดได้รับการเข้ารหัส/เซ็นกำกับ (Sign) ไว้อย่างปลอดภัยด้วย `@nestjs/jwt` ทำให้ไม่สามารถแอบแก้ไขข้อมูลใน Token ระหว่างทางได้
 
-### A03:2021 - Injection (Including XSS)
-Preventing malicious input execution in interpreters (SQL, NoSQL, OS, LDAP, browser).
-- **ORM-based Data Mapping:** Direct database queries are restricted. The project leverages **Prisma**, which acts automatically limits and sanitizes query parameter bindings, vastly neutralizing SQL Injection risks.
-- **Cross-Site Scripting (XSS) Sanitization:** All subjective text inputs (e.g., Leave Reasons) process through the `sanitize-html` engine. Configured tightly with `{ allowedTags: [], allowedAttributes: {} }` mapped in services, enforcing text purity before reaching the database.
+### A03:2021 - Injection (รวมถึง XSS) (ปัญหาโค้ดสอดแทรก)
+ป้องกันการทำงานของคำสั่ง/สคริปต์ที่ประสงค์ร้าย
+- **การจัดการฐานข้อมูลผ่าน ORM:** จำกัดการคิวรีฐานข้อมูลโดยตรง โดยใช้ **Prisma** ซึ่งทำหน้าที่กลั่นกรองและห่อหุ้มคำสั่งให้มีความปลอดภัยสูง ช่วยป้องกัน SQL Injection อย่างเป็นรูปธรรม
+- **ป้องกัน Cross-Site Scripting (XSS):** ทุก ๆ ข้อความบรรยายต่างๆ ที่ส่งมาจากฝั่งผู้ใช้ (เช่น เหตุผลในการลา) จะต้องผ่านเครื่องมือ `sanitize-html` ที่ถูกตั้งค่าไว้ที่ระดับความปลอดภัยสูงสุด (`{ allowedTags: [], allowedAttributes: {} }`) ช่วยล้างสคริปต์แอบแฝงทั้งหมดก่อนจะนำไปเซฟที่ฐานข้อมูล
 
-### A04:2021 - Insecure Design
-Using architectural designs that mitigate risk early.
-- **Validation Pipeline Setup:** Through `class-validator`, the global `ValidationPipe` maps DTOs structurally. Crucially, `{ whitelist: true }` is enabled to automatically strip out unregistered/unexpected parameters sent by attackers.
-- **Strict Decoupling:** The project is strictly decoupled (NestJS REST Backend, separated React/Vite Frontend), establishing clear security boundaries where the frontend interacts entirely via declarative API rather than server-rendered template injection vulnerabilities.
+### A04:2021 - Insecure Design (ช่องโหว่จากการออกแบบ)
+ใช้ระบบที่ป้องกันภัยคุกคามต่างๆ เบื้องต้นตั้งแต่ขั้นตอนเริ่มระบบ
+- **ท่อกรองและกำกับข้อมูลส่วนกลาง (Validation Pipeline):** โปรเจกต์ใช้ `class-validator` ในการทำ Global `ValidationPipe` และจุดที่สำคัญคือการเปิดใช้งาน `{ whitelist: true }` ทำให้ Payload หรือฟิลด์ที่ส่งเข้ามาที่ไม่ได้ลงทะเบียน (หรือแฮกเกอร์จงใจส่งมาเกิน) ถูกลบทิ้งทันที
+- **กรอบการแยกส่วนระบบ:** ใช้งานการแบ่งฝั่งระหว่าง NestJS กัย React/Vite (Decoupled architecture) ทำให้การทำงานของหน้าเว็บใช้รูปแบบ API ทั้งหมด ลดความเสี่ยงในการถูกรันสคริปต์บนแม่แบบของเซิร์ฟเวอร์ (Template Injection) แบบระบบยุคเก่า
 
-### A05:2021 - Security Misconfiguration
-Avoiding defaults, hardening configs, and securely managing the environment.
-- **Environment Management:** Hardcoded secrets are banished. `@nestjs/config` drives configuration behavior entirely through isolated `.env` environments context.
-- **NestJS Defaults:** Leveraging NestJS structure natively prevents common misconfigurations, maintaining strong isolation logic out-of-the-box. 
+### A05:2021 - Security Misconfiguration (การตั้งค่าความปลอดภัยที่ผิดพลาด)
+เลี่ยงการใช้ค่าเริ่มต้น ตั้งค่าให้แข็งแกร่ง และแอบซ่อนความลับอย่างปลอดภัย
+- **การจัดการสภาพแวดล้อมระบบ (Environment):** พวกข้อมูลลับ (Secrets) ถูกแยกจัดการทั้งหมดผ่าน `@nestjs/config` และตั้งรันแยกในไฟล์ `.env` ที่ไม่อนุญาตให้เชื่อมต่อตรงๆ จากภายนอก
+- **ปิดช่องโหว่ด้วย NestJS Defaults:** คุณลักษณะเบื้องต้นของ NestJS ออกแบบมาให้แยกการทำงานออกจากกัน ทำให้ยากต่อการตั้งค่าผิดพลาดแบบเป็นโดมิโน่
 
-### A06:2021 - Vulnerable and Outdated Components
-Maintaining current definitions and supported stacks.
-- **Modern Lifecycle:** Built heavily upon Nest 11 and React 19 foundations, heavily reducing vulnerabilities associated with legacy code snippets and deeply nested dependencies. Managed systematically through `package-lock.json`.
+### A06:2021 - Vulnerable and Outdated Components (ส่วนประกอบที่เก่าและมีช่องโหว่)
+ใช้เทคโนโลยีใหม่ที่ถูกเพชและอัปเดตตลอด
+- **รันบนพื้นฐานไลบรารีสมัยใหม่:** โปรเจกต์ถูกพัฒนาขึ้นบนฐานของ Nest 11 และ React 19 ช่วยลดปัญหาช่องโหว่ในระดับโค้ดย่อยเดิมลงไปมหาศาล และจัดการความสัมพันธ์รุ่นอย่างเป็นระบบโดย `package-lock.json`
 
-### A07:2021 - Identification and Authentication Failures
-Confirming user identities reliably.
-- **OAuth 2.0 Integration:** Using `passport-google-oauth20` establishes a trusted delegation layer for Enterprise identity validation instead of manual registrations alone.
-- **Guarded Tokens:** Passport.js and `passport-jwt` coordinate stateless identification. Tokens are delivered securely and handled dynamically with Cookie configurations mapping to `cookie-parser`.
+### A07:2021 - Identification and Authentication Failures (ความล้มเหลวในการระบุตัวตน)
+การยืนยันบุคคลที่เข้ามาใช้งานให้มีความถูกต้องและไม่รั่วไหล
+- **ระบบยืนยันตัวตนองค์กร OAuth 2.0:** มีการผสาน `passport-google-oauth20` สำหรับดึงบัญชีอีเมล Google เพื่อเลี่ยงปัญหาการจัดการรหัสผ่านใหม่แบบไร้ประสิทธิภาพ
+- **การเก็บ Token รูปแบบ Guarded:** JWT จะไม่อยู่ลอยๆ ในพื้นที่ LocalStorage ของฝั่งบราวเซอร์ แต่อยู่ในรูปแบบ **HttpOnly Cookies** (ทำงานผ่าน `cookie-parser`) ที่ไม่สามารถถูกเขียน/อ่านจากโค้ด JavaScript ใด ๆ บนเว็บได้ ป้องกันการถูกขโมยจากสคริปต์ที่ประสงค์ร้ายโดยตรง
 
-### A08:2021 - Software and Data Integrity Failures
-Ensuring that data comes from a trusted origin without manipulation.
-- **Entity State Logic Constraints:** Approvals explicitly use Transactions (`$transaction`) in Prisma (see `LeavesService.updateStatus`). For instance, quota adjustments and leave approvals lock simultaneously ensuring concurrency doesn't destroy data integrity.
+### A08:2021 - Software and Data Integrity Failures (ข้อมูลสูญเสียความบูรณภาพหรือการบิดเบือนระบบ)
+หลักประกันรักษาระบบและข้อมูลไม่ให้ซ้อนทับหรือแปลกปลอม
+- **การรักษาความเป็นหนึ่งเดียวของข้อมูลด้วย Transactions:** ในจุดที่เป็นตรรกะสำคัญอย่างการอนุมัติ (`LeavesService.updateStatus`) หรือโควตาวันลา จะใช้ Prisma `$transaction` ทุกครั้ง เพื่อรับประกันว่าขั้นตอนการบันทึกสถานะลากับลดโควตาวันหยุด จะเกิดขึ้นหรือยกเลิกไปพร้อมๆ กัน ไม่ทำให้เกิดฐานข้อมูลชำรุด (Data Corruption)
 
-### A09:2021 - Security Logging and Monitoring Failures
-Visibility into application events and active breach attempts.
-- **Comprehensive Audit Log:** Deep implementation of an internal `AuditService`. Critical mutations (`CREATE`, `UPDATE`, `UPDATE_STATUS`, `DELETE`) are extensively monitored. Approver emails, specific document IDs, and actor emails are immediately preserved tracking chain of responsibility.
+### A09:2021 - Security Logging and Monitoring Failures (ความล้มเหลวในการเก็บข้อมูลบันทึกความปลอดภัย)
+สามารถติดตามร่องรอยการแก้ไขข้อมูลทุกฝีก้าวของผู้ใช้แต่ละคนได้
+- **การบันทึกประวัติกิจกรรมแบบเบ็ดเสร็จ (Audit Log):** ติดตั้ง `AuditService` แบบภายใน เพื่อรับหน้าที่ติดตามการเปลี่ยนแปลงข้อมูลหลัก (`CREATE`, `UPDATE`, `UPDATE_STATUS`, `DELETE`) ซึ่งข้อมูลทั้งหมด เช่น อีเมลของผู้ลงมือ, ID เอกสาร, สถานะที่เปลี่ยนไป จะถูกประทับตราเวลาเก็บบันทึกให้อย่างชัดเจน สร้างความรับผิดชอบย้อนหลังได้อย่างมีประสิทธิภาพ
 
-### A10:2021 - Server-Side Request Forgery (SSRF)
-Preventing the server from executing unintended URI requests.
-- **External URL Scoping:** The scope of external routing is entirely limited strictly to trusted Identity Providers (like Google via Passport). Payload inputs containing URLs do not trigger backend HTML interpretation or fetching. 
+### A10:2021 - Server-Side Request Forgery (SSRF) (การหลอกให้เซิร์ฟเวอร์ส่งรีเควสผิดที่)
+ป้องกันเซิร์ฟเวอร์โดนสั่งดึงข้อมูลจากแหล่งปลายทางที่ไม่พึงประสงค์
+- **จำกัดปริมาณการเชื่อมต่อภายนอก:** การวิ่งออกไปยัง URL ข้างนอกได้ถูกจำกัดสิทธิ์ไว้เฉพาะสำหรับการทำ Identity Providers เท่านั้น (เช่น Google via Passport) แม้ผู้ใช้จะหลอกส่งข้อความ Payload เป็น URL เข้ามาในระบบ ระบบฝั่ง Backend จะประมวลผลเป็นเพียงข้อความตัวอักษรธรรมดาและไม่ทำการ Query คืนกลับไปยังจุดนั้นอย่างเด็ดขาด

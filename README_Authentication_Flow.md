@@ -1,72 +1,72 @@
-# Authentication Flow Documentation
+# เอกสารประกอบขั้นตอนการยืนยันตัวตน (Authentication Flow)
 
-This document outlines the authentication operations and flows implemented across the application. The system primarily relies on **stateless JSON Web Tokens (JWT)** securely delivered via **HttpOnly cookies**, backed by **Role-Based Access Control (RBAC)** and **Two-Factor Authentication (TOTP 2FA)**.
-
----
-
-## 🏗️ Core Mechanisms
-- **`jwt` (Access Token):** Short-lived token used for validating route access. Valid for 15 minutes. Set as `httpOnly`, `secure` (in production), `sameSite='lax'`, `path='/'`.
-- **`refreshToken`:** Long-lived token used solely to issue new `jwt` tokens upon expiration. Valid for 7 days. Restricted via `path='/auth'`.
-- **Cryptography:** Passwords secured with `argon2`. TOTP operates via `otplib`.
+เอกสารนี้อธิบายถึงลำดับการทำงาน (Flow) ในระบบ Authentication ที่ใช้ในแอปพลิเคชันทั้งหมด ซึ่งขับเคลื่อนโดยระบบ **JSON Web Tokens (JWT) ไร้สถานะ (Stateless)** และส่งมอบโทเค็นผ่าน **HttpOnly cookies** เพื่อความปลอดภัยสูงสุด อีกทั้งยังเสริมด้วยกลไกการจำกัดสิทธิ์ **Role-Based Access Control (RBAC)** พร้อมด้วยระบบรองรับรหัสแบบ 2 ขั้นตอน **(TOTP 2FA)**
 
 ---
 
-## 🔄 Authentication Flows
-
-### 1. Traditional Email/Password Login
-1. **Client Action:** Submits `email` and `password` to `POST /auth/login`.
-2. **Server Action:** Validates credentials against hashed passwords in the database.
-3. **2FA Check:**
-   - **If 2FA is DISABLED:** Server sets `jwt` and `refreshToken` as secure HttpOnly cookies and responds `200 OK`. Flow finishes.
-   - **If 2FA is ENABLED:** Server bypasses cookie creation and instead returns `{ requiresTwoFactor: true, tempToken: "xxxx" }`.
-
-### 2. Two-Factor Authentication (2FA) Login
-1. **Client Action (Pending 2FA):** Receives the `tempToken` from the initial login step. User inputs the 6-digit TOTP code from their authenticator app.
-2. **Submission:** Submits `code` and `tempToken` to `POST /auth/2fa/verify-login`.
-3. **Server Action:** Validates the temporary token and confirms the TOTP code. Upon success, real `jwt` and `refreshToken` HttpOnly cookies are finally set. 
-
-### 3. Google OAuth 2.0 Registration/Login
-1. **Initiation:** User navigates to `GET /auth/google`. Server redirects to Google's consent screen.
-2. **Callback:** Google redirects back to `GET /auth/google/callback` with profile scopes.
-3. **Processing:**
-   - Auth Guard seamlessly pulls `email` and `name`. 
-   - Server registers a new user if they don't exist, or logs them in if they do.
-   - Server issues the internal `jwt` and `refreshToken` HttpOnly cookies dynamically.
-4. **Redirection:** Server initiates a 302 redirect sending the user automatically to the frontend `/dashboard/personal`.
-
-### 4. Registration Process
-1. **Submission:** User data (Name, Email, Password, Department Data) sent to `POST /auth/register`.
-2. **Creation:** Automatically creates User (Role defaults gracefully).
-3. **Persistence:** `jwt` and `refreshToken` are directly set so the user is immediately logged in upon successful registration.
+## 🏗️ กลไกหลักที่ใช้ในระบบยืนยันตัวตน
+- **`jwt` (Access Token):** โทเค็นอายุสั้นสำหรับใช้เข้าถึงระบบต่างๆ ภายใน (มีอายุ 15 นาที) จัดเก็บอยู่ในระบบแบบ `httpOnly`, การรัน production จะเปิดระบบกุญแจ `secure`, `sameSite='lax'` และกำหนดเส้นทางให้วิ่งผ่านแบบ `path='/'` เสมอ
+- **`refreshToken`:** โทเค็นอายุยาว (7 วัน) สำหรับขอรื้อฟื้นอายุการทำงานของ `jwt` ทำงานที่จุดเดียวคือ `path='/auth'` ท้ายที่สุดเพื่อป้องกันการถูกเผยแพร่เกินจำเป็น
+- **ความปลอดภัยเชิงวิทยาการรหัสลับ:** ใช้ `argon2` สำหรับการแฮชรหัสผ่าน และใช้ไลบรารี `otplib` ในการทำรหัส TOTP สองขั้นตอน 
 
 ---
 
-## 🛡️ Session Lifecycle Management
+## 🔄 ลำดับขั้นตอนรูปแบบประมวลผลระบบลงชื่อเข้าใช้ (Flows)
 
-### Token Refreshing (Silent Session Renewal)
-1. When the `jwt` expires (15 mins), frontend interactions seamlessly fail with `401 Unauthorized`.
-2. The frontend interceptor implicitly hits `POST /auth/refresh`.
-3. The server reads the existing `refreshToken` cookie.
-4. **Rotation:** If valid, the server returns a new `jwt` and rotates the `refreshToken` issuing a fresh set of HttpOnly cookies to keep the session alive.
+### 1. วิธีเข้าสู่ระบบแบบอีเมลและรหัสผ่านตามปกติ (Traditional Login)
+1. **ฝั่งระบบบราวเซอร์ส่งกระแสข้อมูล:** ส่ง Payload จำพวก `email` และ `password` วิ่งตรงไปยังจุดหมาย `POST /auth/login`
+2. **ระบบส่วนหลังดำเนินการ:** ทำการตรวจสอบและเทียบรหัสผ่านจากฐานข้อมูลด้วยการรันคำนวณ Hashing
+3. **ตรวจสอบกลไกการยืนยัน 2 ขั้นตอน (2FA):**
+   - **หาก 2FA ถูกปิดไว้:** เซิร์ฟเวอร์จะคืนโทเค็น `jwt` และ `refreshToken` ใส่เข้ามาในคุกกี้ที่โดนล็อคไว้แบบ HttpOnly พ่วงไปถึงการพ่นรหัสสถานะ `200 OK` ถือเป็นการสิ้นสุดกระบวนการ
+   - **หาก 2FA เลี้ยงการเปิดทำงานไว้:** ระบบจะระงับการสร้างคุกกี้ Session ตัวจริง แล้วส่งเป็นกระแสข้อมูลตอบกลับแทนว่า `{ requiresTwoFactor: true, tempToken: "xxxx" }` 
 
-### Logout Process
-1. User requests `GET /auth/logout`.
-2. Server pulls the current `refreshToken` and physically invalidates the session footprint in the persistence layer.
-3. Server explicitly uses `res.clearCookie()` wiping both `jwt` and `refreshToken` from the browser context globally.
+### 2. วิธีเข้าสู่ระบบรูปแบบโค้ดหกหลัก (2FA Login)
+1. **ผู้ใช้ได้รับสัญญาณ (Pending 2FA):** ทำการจดหน้าจอรอรหัส `tempToken` มาจากสเตปที่ 1 ของระบบ และรอนำกรอกเลข TOTP 6 ทศนิยมจากแอปมือถือ
+2. **ส่งยืนยัน:** วิ่งแนบคำร้องพร้อม `code` ประกอบกับ `tempToken` เพื่อไปยื่นผลประเมินที่ `POST /auth/2fa/verify-login`
+3. **ระบบเปิดการตรวจรับ:** ดำเนินการอนุมัติ หากโค้ดมีอายุการใช้งานอยู่ในจังหวะที่กำหนด ระบบจึงจะพ่นคุกกี้ที่เป็นตัวเชื่อม Session ของจริงแบบคลุมด้วย HttpOnly
+
+### 3. การสร้างบัญชีใหม่หรือการสวมรอยเข้าระบบ (Google OAuth 2.0)
+1. **เปิดกลไกการทำงาน:** ผู้ใช้วิ่งเป้าหมายไปหา `GET /auth/google` หลังนั้น เซิร์ฟเวอร์ทำการโยกย้าย (Redirect) ไปดึงหน้าจอยินยอมของฝั่งคลัง Google
+2. **จังหวะป้อนข้อมูลกลับ:** เมื่อล็อกอิน Google ดำเนินงานสำเร็จ จะมีการตอบรับกลับแบบ Callback มาสู่เส้นทาง `GET /auth/google/callback` พร้อมประวัติบัญชีผู้ใช้งาน
+3. **พิจารณาการประเมินผล:**
+   - องค์รักษ์ Auth Guard ดึงท่อรับเฉพาะข้อมูลอย่าง `email` และ `name` เข้ามาประมวลผล
+   - หากผู้ใช้ยังไม่ได้ใช้บริการ ระบบจะจำลองข้อมูลสวมรอยสร้างบัญชีอัตโนมัติ หากมีระบบก็เข้าใช้งานระบบเดิมโดยทันที 
+   - ระบบตั้งค่าสิทธิ์ให้เซิร์ฟเวอร์เสก `jwt` พร้อม `refreshToken` ทับลงบนคุกกี้ทันที 
+4. **จุดหมาย:** โยนผู้ใช้ (Redirect) หันเหไปยังพื้นที่ทำงาน `Dashboard/personal` ที่ฝั่งแอปพลิเคชันหน้าด่านโดยปราศจากการรอคอย
+
+### 4. กระบวนการสร้างบัญชีผ่านผู้ใช้งาน 
+1. **การรวมข้อมูล:** ผู้ใช้กรอกข้อมูลผ่านตัวฟอร์มส่งประจุพลังเข้าสู่สายสัญญาณ `POST /auth/register` (ได้แก่ ชื่อ, อีเมล, รหัสผ่าน, และแผนก)
+2. **สร้างฐานบัญชี:** จัดระดับพนักงานเข้าฐานระบบแบบปกติ (Role ถูกกำหนดค่าธรรมดา)
+3. **สวมวิญญาณการล็อกอิน:** จังหวะนั้นเซิร์ฟเวอร์ตีโอบรวบบัญชีเข้าใช้งานให้ทันที ด้วยการสาด `jwt` และ `refreshToken` ไปเกาะที่บราวเซอร์ผู้ใช้หลังสร้างบัญชีลงตัว
 
 ---
 
-## ⚙️ 2FA Management (Requires Active Session)
-- **Generate:** `POST /auth/2fa/generate` creates the private secret and returns a scannable QR Code image URL for Google Authenticator.
-- **Enable:** `POST /auth/2fa/enable` requires the user to input the generated code to confirm setup completion.
-- **Disable:** `POST /auth/2fa/disable` requires an active code verification step before turning the security layer off.
+## 🛡️ วัฏจักรและกลไกการรักษาเสถียรภาพตัวแปรโทเค็น (Session Lifecycle)
+
+### ลำดับขั้นตอนการรีเฟรชอายุรอบสิทธิบัตรประจำวัน (Silent Token Refreshing)
+1. จังหวะที่ `jwt` ตกตะกอนหมดอายุการทำงาน (เกิน 15 นาที) กระแสระบบติดต่อระหว่าง Frontend ไป Backend จะได้รับรหัสสถานะ `401 Unauthorized` แบบชั่วครู่
+2. อินเตอร์เซปเตอร์ (Interceptor) ฝั่งบราวเซอร์ที่ทำหน้าที่แอบซุ่ม จะพุ่งคำสั่งตัวจับ `POST /auth/refresh` อย่างเงียบเชียบเพื่อแก้วิกฤตการณ์
+3. เซิร์ฟเวอร์จะขุดดูค่าคุกกี้ `refreshToken` อันเก่าออกประเมินตัวแปร
+4. **หมุนเวียนรับชุดใหม่ (Rotation):** ถ้ายืนยันรหัสนี้มีความชอบธรรม ระบบจะทอนชุดของ `jwt` ชุดใหม่มาให้ และสลัดชุดของเก่า `refreshToken` แล้วยิงสลักประทับตราชุดคุกกี้อัปเดตอายุเพื่อกลับมาทำหน้าที่ต่อเนื่อง
+
+### ลำดับการกวาดล้างพิกัดการลงชื่อออก (Logout)
+1. เกิดพฤติกรรมการเรียกใช้งาน `GET /auth/logout` ออกมาโดยทันที 
+2. ระบบเรียกกระชากตัว `refreshToken` บิดวงจรการทำงานออกจากข้อมูลกลางให้ไร้ค่าไปทั้งหมดบนฝั่ง Database แบบประจักษ์
+3. ตัวระบบสั่งรันคำสั่ง `res.clearCookie()` แบบเด็ดขาดให้ฉีกทุก ๆ อนุภาคของ `jwt` และ `refreshToken` บนบราวเซอร์ไปสิ้นสภาพ ถือว่าเป็นการยุติหน้าที่
 
 ---
 
-## 🔒 Password Recovery Layer
-- **Forgot Password:** `POST /auth/forgot-password` generates a temporary, randomized token emailed to the core address.
-- **Reset Password:** `POST /auth/reset-password` consumes the specific token. Crucially, resetting the password **immediately triggers a global session wipe (Cookie clearing)** preventing legacy endpoints from behaving irregularly. 
+## ⚙️ โครงการกำกับ 2FA แบบตั้งค่าส่วนผสมบุคคล (สงวนสิทธิ์ต้องล็อกอินอยู่ก่อน)
+- **ประมวลการเข้ารหัส (Generate):** ยิงพิกัดไปยัง `POST /auth/2fa/generate` สร้างอักขระความลับพร้อมคืนมาในรูปแบบ URL ที่หน้าตาเป็น QR Code 
+- **อนุมัติพิกัด (Enable):** เล็งเข้าสู่ `POST /auth/2fa/enable` เปิดโหมดทวีคูณ ต้องให้ผู้ใช้คอนเฟิร์มป้อนข้อมูลรหัส 6 หลักตัวเลขอย่างแม่นยำจึงจะลงทะเบียนสำเร็จ
+- **ระงับสถานะ (Disable):** ยิงคำสั่งตระตรียมสถานะรหัสในฐานระบบเข้าสู่ `POST /auth/2fa/disable` มีเงื่อนไขประเมินค่ารหัสปัจจุบันก่อนจะอนุญาตพับรหัสประจำตัวถาวร
 
 ---
 
-_Audit Note:_ All activities inside the Authentication Flow (`LOGIN`, `OAUTH_LOGIN`, `LOGIN_2FA`, `REGISTER`, `LOGOUT`, `RESET_PASSWORD`) fire strict, permanent logs via `AuditService` to trace state transitions per user explicitly.
+## 🔒 แนวทางอภิบาลเมื่อขัดข้องประเด็นรหัสผ่าน (Password Recovery Layer)
+- **แจ้งลืมพาสเวิร์ด (Forgot Password):** ปรับจูนเข้าพิกัด `POST /auth/forgot-password` เป็นระบบยิงอนุภาคสุ่มเป็นโทเค็นแบบชั่วคราวจัดส่งไปยังในตู้ไปรษณีย์รหัสผ่านอีเมลผู้ใช้
+- **รีดพาสเวิร์ดใหม่ล้างบัญชี (Reset Password):** ทำการรัดสายล้อมผ่านสิทธิ์ `POST /auth/reset-password` เมื่อป้อนโทเค็นการเสกถูกต้อง ระบบจะชำระความเก่าของคุกกี้ที่คงค้างอยู่ทั่วสารทิศทิ้ง **(Cookie clearing)** โดยฉับพลัน ทำให้ไม่มีร่องรอยค้างบนอุปกรณ์อื่นๆ ป้องกันความเสี่ยงให้แบบเบ็ดเสร็จ
+
+---
+
+_เกร็ดความรู้ระบบส่วนกลาง (Audit Note):_ ประวัติพฤติการณ์ใดบนสายธารการล็อกอินทั้งหมดพัวพันใน (`LOGIN`, `OAUTH_LOGIN`, `LOGIN_2FA`, `REGISTER`, `LOGOUT`, `RESET_PASSWORD`) จะส่งกระแสพลังแบบเด็ดขาด วิ่งเกาะอยู่ในรอยประทับพิง `AuditService` แบบเรียงราย เพื่อไว้แกะรอยประวัติของปัจเจกบุคคลไม่ให้รอดพ้นสายตาส่วนกลาง

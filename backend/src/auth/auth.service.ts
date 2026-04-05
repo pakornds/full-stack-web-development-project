@@ -10,6 +10,7 @@ import * as argon2 from 'argon2';
 import * as nodemailer from 'nodemailer';
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from './token.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -86,12 +87,14 @@ export class AuthService {
     try {
       const leaveTypes = await this.prisma.leaveType.findMany();
       if (leaveTypes.length === 0) {
-        console.warn(`[assignDefaultLeaveQuotas] No leave types found to assign quotas for user ${userId}`);
+        console.warn(
+          `[assignDefaultLeaveQuotas] No leave types found to assign quotas for user ${userId}`,
+        );
         return;
       }
 
       const currentYear = new Date().getFullYear();
-      
+
       for (const type of leaveTypes) {
         await this.prisma.leaveQuota.upsert({
           where: {
@@ -111,9 +114,14 @@ export class AuthService {
           },
         });
       }
-      console.log(`[assignDefaultLeaveQuotas] Successfully created quotas for user ${userId}`);
+      console.log(
+        `[assignDefaultLeaveQuotas] Successfully created quotas for user ${userId}`,
+      );
     } catch (error) {
-      console.error(`[assignDefaultLeaveQuotas] Failed to create quotas for user ${userId}:`, error);
+      console.error(
+        `[assignDefaultLeaveQuotas] Failed to create quotas for user ${userId}:`,
+        error,
+      );
     }
   }
 
@@ -159,6 +167,13 @@ export class AuthService {
 
       if (existingUser) {
         throw new BadRequestException('User with this email already exists.');
+      }
+
+      const isBreached = await this.isPasswordBreached(userDto.password);
+      if (isBreached) {
+        throw new BadRequestException(
+          'Password has been found in a data breach. Please choose a different password.',
+        );
       }
 
       const hashedPassword = await argon2.hash(userDto.password);
@@ -248,7 +263,8 @@ export class AuthService {
     let payload: AuthTokenPayload;
 
     try {
-      payload = this.tokenService.verifyRefreshToken<AuthTokenPayload>(refreshToken);
+      payload =
+        this.tokenService.verifyRefreshToken<AuthTokenPayload>(refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -432,6 +448,13 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
+    const isBreached = await this.isPasswordBreached(newPassword);
+    if (isBreached) {
+      throw new BadRequestException(
+        'Password has been found in a data breach. Please choose a different password.',
+      );
+    }
+
     const hashedPassword = await argon2.hash(newPassword);
 
     await this.prisma.user.update({
@@ -448,6 +471,38 @@ export class AuthService {
       },
     });
 
-    return { message: 'Password has been reset successfully.', email: user.email };
+    return {
+      message: 'Password has been reset successfully.',
+      email: user.email,
+    };
+  }
+
+  private async isPasswordBreached(password: string): Promise<boolean> {
+    const hash = createHash('sha1')
+      .update(password)
+      .digest('hex')
+      .toUpperCase();
+    const prefix = hash.slice(0, 5);
+    const suffix = hash.slice(5);
+
+    try {
+      const response = await fetch(
+        `https://api.pwnedpasswords.com/range/${prefix}`,
+      );
+      if (!response.ok) {
+        return false;
+      }
+      const data = await response.text();
+      const lines = data.split('\n');
+      for (const line of lines) {
+        if (line.trim().startsWith(suffix)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.warn('HIPB API error:', error);
+      return false; // Return false if the API is down
+    }
   }
 }

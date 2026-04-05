@@ -92,6 +92,10 @@ export class LeaveController {
     @Body('departmentId') departmentId: string | null,
     @Req() req: AuthenticatedRequest,
   ) {
-    return this.leaveService.updateUserDepartment(id, departmentId, req.user.email);
+    return this.leaveService.updateUserDepartment(
+      id,
+      departmentId,
+      req.user.email,
+    );
   }
 }

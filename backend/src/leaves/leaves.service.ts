@@ -35,11 +35,11 @@ export class LeavesService {
         status: 'Pending',
       },
     });
-    
+
     this.auditService.logAction(userEmail, 'CREATE', 'LeaveRequest', {
       leaveTypeId: data.leaveType,
       startDate: data.startDate,
-      endDate: data.endDate
+      endDate: data.endDate,
     });
 
     return result;
@@ -96,7 +96,13 @@ export class LeavesService {
     });
   }
 
-  async update(id: string, userId: string, userEmail: string, role: string, data: UpdateLeaveDto) {
+  async update(
+    id: string,
+    userId: string,
+    userEmail: string,
+    role: string,
+    data: UpdateLeaveDto,
+  ) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -129,7 +135,10 @@ export class LeavesService {
       },
     });
 
-    this.auditService.logAction(userEmail, 'UPDATE', 'LeaveRequest', { id, leaveTypeId: data.leaveType });
+    this.auditService.logAction(userEmail, 'UPDATE', 'LeaveRequest', {
+      id,
+      leaveTypeId: data.leaveType,
+    });
 
     return updated;
   }
@@ -155,7 +164,12 @@ export class LeavesService {
     return removed;
   }
 
-  async updateStatus(id: string, status: string, approverId: string, approverEmail: string) {
+  async updateStatus(
+    id: string,
+    status: string,
+    approverId: string,
+    approverEmail: string,
+  ) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -165,7 +179,8 @@ export class LeavesService {
       throw new ForbiddenException('Cannot edit a finalized request');
     }
 
-    const normalizedStatus = status.toLowerCase() === 'approved' ? 'approved' : 'rejected';
+    const normalizedStatus =
+      status.toLowerCase() === 'approved' ? 'approved' : 'rejected';
 
     return this.prisma.$transaction(async (prisma) => {
       const updatedRequest = await prisma.leaveRequest.update({
@@ -193,7 +208,12 @@ export class LeavesService {
         });
       }
 
-      this.auditService.logAction(approverEmail, 'UPDATE_STATUS', 'LeaveRequest', { id, status: normalizedStatus });
+      this.auditService.logAction(
+        approverEmail,
+        'UPDATE_STATUS',
+        'LeaveRequest',
+        { id, status: normalizedStatus },
+      );
 
       return updatedRequest;
     });

@@ -21,7 +21,7 @@ interface AuthenticatedRequest extends Request {
 export class TwoFactorController {
   constructor(
     private readonly twoFactorService: TwoFactorService,
-    private readonly auditService: AuditService
+    private readonly auditService: AuditService,
   ) {}
 
   private setAuthCookies(

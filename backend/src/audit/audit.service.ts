@@ -22,7 +22,12 @@ export class AuditService implements OnModuleInit {
     this.logFilePath = path.join(logDir, 'audit.log');
   }
 
-  async logAction(userEmail: string, action: string, resource: string, details?: any) {
+  async logAction(
+    userEmail: string,
+    action: string,
+    resource: string,
+    details?: any,
+  ) {
     const logEntry: AuditLog = {
       timestamp: new Date().toISOString(),
       userEmail,
@@ -31,7 +36,10 @@ export class AuditService implements OnModuleInit {
       details,
     };
     try {
-      await fs.promises.appendFile(this.logFilePath, JSON.stringify(logEntry) + '\n');
+      await fs.promises.appendFile(
+        this.logFilePath,
+        JSON.stringify(logEntry) + '\n',
+      );
     } catch (err) {
       console.error('Failed to write audit log:', err);
     }
@@ -41,14 +49,19 @@ export class AuditService implements OnModuleInit {
     try {
       if (!fs.existsSync(this.logFilePath)) return [];
       const content = await fs.promises.readFile(this.logFilePath, 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim().length > 0);
-      return lines.map(line => {
-        try {
-          return JSON.parse(line);
-        } catch {
-          return null;
-        }
-      }).filter(log => log !== null).reverse(); // newest first
+      const lines = content
+        .split('\n')
+        .filter((line) => line.trim().length > 0);
+      return lines
+        .map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return null;
+          }
+        })
+        .filter((log) => log !== null)
+        .reverse(); // newest first
     } catch (err) {
       console.error('Failed to read audit logs:', err);
       return [];

@@ -23,7 +23,7 @@ dist/
 build/
 coverage/
 
-# # Sqlite
+# Sqlite
 backend/prisma/dev.db
 backend/dev.db
 backend/dev.db-journal

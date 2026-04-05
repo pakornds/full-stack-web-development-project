@@ -21,6 +21,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 interface AuthenticatedRequest extends Request {
   user: { email: string; name: string; id: string; role: string };
@@ -32,6 +33,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
   ) {}
 
   // ─── Cookie Helpers ────────────────────────────────────────
@@ -104,6 +106,11 @@ export class AuthController {
     });
 
     this.setAuthCookies(res, accessToken, refreshToken);
+
+    if (user.email) {
+      this.auditService.logAction(user.email, 'OAUTH_LOGIN', 'Auth');
+    }
+
     return res.redirect(
       `${this.configService.get('FRONTEND_URL')}/dashboard/personal`,
     );
@@ -146,6 +153,10 @@ export class AuthController {
 
     this.setAuthCookies(res, result.accessToken!, result.refreshToken!);
 
+    if (result.user) {
+      this.auditService.logAction(result.user.email, 'LOGIN', 'Auth');
+    }
+
     return res
       .status(HttpStatus.OK)
       .json({ user: result.user, message: 'Logged in successfully' });
@@ -157,6 +168,8 @@ export class AuthController {
       await this.authService.register(body);
 
     this.setAuthCookies(res, accessToken, refreshToken);
+
+    this.auditService.logAction(user.email, 'REGISTER', 'Auth');
 
     return res
       .status(HttpStatus.CREATED)
@@ -194,8 +207,12 @@ export class AuthController {
         ? req.cookies.refreshToken
         : undefined;
 
-    await this.authService.logout(refreshToken);
+    const { email } = await this.authService.logout(refreshToken);
     this.clearAuthCookies(res);
+
+    if (email) {
+      this.auditService.logAction(email, 'LOGOUT', 'Auth');
+    }
 
     return res
       .status(HttpStatus.OK)
@@ -215,6 +232,7 @@ export class AuthController {
       body.newPassword,
     );
     this.clearAuthCookies(res); // Clear any existing sessions when resetting
+    this.auditService.logAction(response.email, 'RESET_PASSWORD', 'Auth');
     return res.status(HttpStatus.OK).json(response);
   }
 }

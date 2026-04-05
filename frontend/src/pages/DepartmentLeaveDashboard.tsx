@@ -67,6 +67,15 @@ const DepartmentLeaveDashboard: React.FC = () => {
     }
   };
 
+  // Dynamically collect all unique leave types across the entire organization to use as headers
+  const allLeaveTypes = new Set<string>();
+  departments.forEach(dept => {
+    dept.members.forEach(m => {
+      m.quotas.forEach(q => allLeaveTypes.add(q.leaveType));
+    });
+  });
+  const leaveTypeHeaders = Array.from(allLeaveTypes).sort();
+
 
   const filteredDepartments = departments
     .map((dept) => ({
@@ -207,8 +216,8 @@ const DepartmentLeaveDashboard: React.FC = () => {
                     <th>Department</th>
                     <th>Email</th>
                     <th>Role</th>
-                    {departments[0]?.members[0]?.quotas.map((q) => (
-                      <th key={q.leaveType}>{q.leaveType}</th>
+                    {leaveTypeHeaders.map((type) => (
+                      <th key={type}>{type}</th>
                     ))}
                     <th>Total Used</th>
                     <th>Actions</th>
@@ -271,13 +280,22 @@ const DepartmentLeaveDashboard: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      {member.quotas.map((q) => (
-                        <td key={q.leaveType} className="quota-cell">
-                          <span className="used-count">{q.usedDays}</span>
-                          <span className="quota-separator">/</span>
-                          <span className="total-count">{q.totalDays}</span>
-                        </td>
-                      ))}
+                      {leaveTypeHeaders.map((type) => {
+                        const q = member.quotas.find(q => q.leaveType === type);
+                        return (
+                          <td key={type} className="quota-cell">
+                            {q ? (
+                              <>
+                                <span className="used-count">{q.usedDays}</span>
+                                <span className="quota-separator">/</span>
+                                <span className="total-count">{q.totalDays}</span>
+                              </>
+                            ) : (
+                              <span>—</span>
+                            )}
+                          </td>
+                        );
+                      })}
                       <td>
                         <strong>{member.totalUsed}</strong>
                         <span className="text-muted">

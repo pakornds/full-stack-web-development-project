@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LeaveModule } from './leave/leave.module';
 import { LeavesModule } from './leaves/leaves.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LeavesModule } from './leaves/leaves.module';
     PrismaModule,
     LeaveModule,
     LeavesModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

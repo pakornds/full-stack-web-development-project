@@ -24,6 +24,7 @@ import { Roles } from '../auth/roles.decorator';
 interface UserRequest {
   user: {
     id: string;
+    email: string;
     role: string;
     departmentId?: string;
   };
@@ -38,7 +39,7 @@ export class LeavesController {
   @Roles('employee', 'manager', 'admin')
   @Post()
   create(@Request() req: UserRequest, @Body() createLeaveDto: CreateLeaveDto) {
-    return this.leavesService.create(req.user.id, createLeaveDto);
+    return this.leavesService.create(req.user.id, req.user.email, createLeaveDto);
   }
 
   @Roles('employee', 'manager', 'admin')
@@ -66,6 +67,7 @@ export class LeavesController {
     return this.leavesService.update(
       id,
       req.user.id,
+      req.user.email,
       req.user.role,
       updateLeaveDto,
     );
@@ -74,7 +76,7 @@ export class LeavesController {
   @Roles('employee', 'manager', 'admin')
   @Delete(':id')
   remove(@Request() req: UserRequest, @Param('id') id: string) {
-    return this.leavesService.remove(id, req.user.id, req.user.role);
+    return this.leavesService.remove(id, req.user.id, req.user.email, req.user.role);
   }
 
   @Roles('manager', 'admin')
@@ -88,6 +90,7 @@ export class LeavesController {
       id,
       updateStatusDto.status,
       req.user.id,
+      req.user.email,
     );
   }
 }

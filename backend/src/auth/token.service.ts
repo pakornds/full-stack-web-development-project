@@ -26,6 +26,13 @@ export class TokenService {
     return this.configService.get<string>('JWT_SECRET') || 'secret';
   }
 
+  getRefreshTokenSecret(): string {
+    return (
+      this.configService.get<string>('REFRESH_TOKEN_HASH_SECRET') ||
+      this.getJwtSecret()
+    );
+  }
+
   private getAccessTokenTtl(): number {
     return (
       this.configService.get<number>('ACCESS_TOKEN_TTL_SECONDS') ?? 15 * 60
@@ -40,9 +47,7 @@ export class TokenService {
   }
 
   hashRefreshToken(token: string): string {
-    const hashSecret =
-      this.configService.get<string>('REFRESH_TOKEN_HASH_SECRET') ||
-      this.getJwtSecret();
+    const hashSecret = this.getRefreshTokenSecret();
     return createHmac('sha256', hashSecret).update(token).digest('hex');
   }
 
@@ -79,7 +84,7 @@ export class TokenService {
     });
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: this.getJwtSecret(),
+      secret: this.getRefreshTokenSecret(),
       expiresIn: this.getRefreshTokenTtl(),
     });
 
@@ -121,6 +126,19 @@ export class TokenService {
   verifyTokenIgnoringExpiry<T extends object>(token: string): T {
     return this.jwtService.verify<T>(token, {
       secret: this.getJwtSecret(),
+      ignoreExpiration: true,
+    });
+  }
+
+  verifyRefreshToken<T extends object>(token: string): T {
+    return this.jwtService.verify<T>(token, {
+      secret: this.getRefreshTokenSecret(),
+    });
+  }
+
+  verifyRefreshTokenIgnoringExpiry<T extends object>(token: string): T {
+    return this.jwtService.verify<T>(token, {
+      secret: this.getRefreshTokenSecret(),
       ignoreExpiration: true,
     });
   }

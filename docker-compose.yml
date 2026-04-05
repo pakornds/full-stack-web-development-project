@@ -4,7 +4,7 @@ services:
     container_name: fsd-postgres
     restart: unless-stopped
     env_file:
-      - ./backend/.env
+      - ./backend/.env.production
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./backend/.env
+      - ./backend/.env.production
     depends_on:
       - db
     environment:
@@ -38,7 +38,7 @@ services:
     ports:
       - "5555:5555"
     env_file:
-      - ./backend/.env
+      - ./backend/.env.production
     depends_on:
       - db
     networks:

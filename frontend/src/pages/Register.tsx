@@ -16,6 +16,35 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
+  const calculatePasswordStrength = (password: string) => {
+    let score = 0;
+    if (!password) return 0;
+    if (password.length >= 8) score += 1;
+    if (password.length >= 15) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[!@#$%^&*?]/.test(password)) score += 1;
+    return score;
+  };
+
+  const getStrengthColor = (score: number) => {
+    if (score <= 2) return "#ff4d4d"; // Weak
+    if (score <= 4) return "#ffa64d"; // Medium
+    if (score === 5) return "#b3ff66"; // Good
+    return "#00cc44"; // Strong
+  };
+
+  const getStrengthLabel = (score: number) => {
+    if (score === 0) return "";
+    if (score <= 2) return "Weak";
+    if (score <= 4) return "Fair";
+    if (score === 5) return "Good";
+    return "Strong";
+  };
+
+  const passwordScore = calculatePasswordStrength(formData.password);
+
   const handleGoogleLogin = async () => {
     try {
       await registerWithGoogle();
@@ -93,14 +122,42 @@ const Register: React.FC = () => {
             onChange={handleChange}
             required
           />
-          <input
-            type="password"
-            name="password"
-            placeholder="Secure Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <div style={{ position: "relative", marginBottom: "15px" }}>
+            <input
+              type="password"
+              name="password"
+              placeholder="Secure Password (Min 15 chars)"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              style={{ width: "100%", boxSizing: "border-box", marginBottom: "5px" }}
+            />
+            {formData.password.length > 0 && (
+              <div style={{ marginTop: "5px" }}>
+                <div
+                  style={{
+                    height: "6px",
+                    width: "100%",
+                    backgroundColor: "#e0e0e0",
+                    borderRadius: "3px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${(passwordScore / 6) * 100}%`,
+                      backgroundColor: getStrengthColor(passwordScore),
+                      transition: "width 0.3s ease, background-color 0.3s ease",
+                    }}
+                  ></div>
+                </div>
+                <div style={{ fontSize: "12px", color: "#666", marginTop: "4px", textAlign: "right" }}>
+                  Strength: {getStrengthLabel(passwordScore)}
+                </div>
+              </div>
+            )}
+          </div>
           <button type="submit" className="submit-btn" disabled={loading}>
             {loading ? "Creating Account..." : "Register"}
           </button>

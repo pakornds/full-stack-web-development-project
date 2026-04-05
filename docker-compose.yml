@@ -58,19 +58,19 @@ services:
     networks:
       - app-network
 
-  sonarqube:
-    image: sonarqube:community
-    container_name: fsd-sonarqube
-    ports:
-      - "9000:9000"
-    environment:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
-      - sonarqube_extensions:/opt/sonarqube/extensions
-    networks:
-      - app-network
+  # sonarqube:
+  #   image: sonarqube:community
+  #   container_name: fsd-sonarqube
+  #   ports:
+  #     - "9000:9000"
+  #   environment:
+  #     SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+  #   volumes:
+  #     - sonarqube_data:/opt/sonarqube/data
+  #     - sonarqube_logs:/opt/sonarqube/logs
+  #     - sonarqube_extensions:/opt/sonarqube/extensions
+  #   networks:
+  #     - app-network
 
 networks:
   app-network:

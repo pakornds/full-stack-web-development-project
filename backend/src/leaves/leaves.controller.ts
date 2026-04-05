@@ -39,7 +39,11 @@ export class LeavesController {
   @Roles('employee', 'manager', 'admin')
   @Post()
   create(@Request() req: UserRequest, @Body() createLeaveDto: CreateLeaveDto) {
-    return this.leavesService.create(req.user.id, req.user.email, createLeaveDto);
+    return this.leavesService.create(
+      req.user.id,
+      req.user.email,
+      createLeaveDto,
+    );
   }
 
   @Roles('employee', 'manager', 'admin')
@@ -76,7 +80,12 @@ export class LeavesController {
   @Roles('employee', 'manager', 'admin')
   @Delete(':id')
   remove(@Request() req: UserRequest, @Param('id') id: string) {
-    return this.leavesService.remove(id, req.user.id, req.user.email, req.user.role);
+    return this.leavesService.remove(
+      id,
+      req.user.id,
+      req.user.email,
+      req.user.role,
+    );
   }
 
   @Roles('manager', 'admin')

@@ -34,6 +34,7 @@
 ### A07:2025 - Authentication Failures (ความล้มเหลวในการระบุและยืนยันตัวตน)
 * **Two-Factor Authentication (2FA):** รองรับระบบสแกนตรวจสอบสิทธิ์ 2 ขั้นตอน (TOTP/Time-based) โดยใช้มาตรฐานไลบรารี `otplib`
 * **JWT Handling & Strict Verification:** มีการออก Access Token แยกร่วมกับ Refresh Token (Rotation) และในระหว่างทำ 2FA จะไม่มีการแจก Token จริงจนกว่าจะยืนยันเลขชุดผ่าน (ออกเพียง Temp token)
+* **Breached Password Detection:** มีการตรวจสอบรหัสผ่านกับฐานข้อมูล Have I Been Pwned (HIBP) แบบ k-Anonymity (ส่งเฉพาะ 5 ตัวแรกของ SHA-1 Hash) ทุกครั้งที่มีการสมัครสมาชิกหรือรีเซ็ตรหัสผ่าน เพื่อป้องกันการใช้รหัสผ่านที่เคยหลุดรั่วไหลในอดีต
 
 ### A08:2025 - Software or Data Integrity Failures (ซอฟต์แวร์และการคงสภาพข้อมูลบกพร่อง)
 * **Token Integrity:** JSON Web Token ทั้งหมดที่ใช้ถูกรับรองการตรวจสอบความถูกต้องด้วยกุญแจสมมาตรของ Backend หากผู้ไม่หวังดีลงนามเปลี่ยนแปลง Token ปลอมแปลง สิทธิ์นั้นจะถูกริบคืนทันทีเพราะ Middleware อ่านค่าขยะได้

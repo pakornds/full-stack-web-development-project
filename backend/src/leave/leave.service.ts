@@ -10,7 +10,7 @@ import { AuditService } from '../audit/audit.service';
 export class LeaveService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditService: AuditService
+    private readonly auditService: AuditService,
   ) {}
 
   // ─── Leave Types ──────────────────────────────────────────
@@ -82,7 +82,6 @@ export class LeaveService {
     };
   }
 
-
   // ─── Department Leave Dashboard (HR / Admin) ──────────────
 
   async getDepartmentLeave(userId: string, role: string) {
@@ -118,19 +117,22 @@ export class LeaveService {
       orderBy: { name: 'asc' },
     });
 
-    const unassignedUsers = role === 'admin' ? await this.prisma.user.findMany({
-      where: { departmentId: null },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: { select: { id: true, name: true } },
-        leaveQuotas: {
-          where: { year: new Date().getFullYear() },
-          include: { leaveType: true },
-        },
-      },
-    }) : [];
+    const unassignedUsers =
+      role === 'admin'
+        ? await this.prisma.user.findMany({
+            where: { departmentId: null },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: { select: { id: true, name: true } },
+              leaveQuotas: {
+                where: { year: new Date().getFullYear() },
+                include: { leaveType: true },
+              },
+            },
+          })
+        : [];
 
     const formattedDepts = departments.map((dept) => ({
       id: dept.id,
@@ -197,7 +199,7 @@ export class LeaveService {
     if (role !== 'admin') {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { department: true }
+        include: { department: true },
       });
       if (user?.department?.name !== 'Human Resources') {
         throw new ForbiddenException('Only HR department can view leave logs');
@@ -245,7 +247,7 @@ export class LeaveService {
     if (role !== 'admin') {
       const u = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { department: true }
+        include: { department: true },
       });
       if (u?.department?.name !== 'Human Resources') {
         throw new ForbiddenException('Only HR department can view leave logs');
@@ -320,13 +322,20 @@ export class LeaveService {
       data: { roleId: roleRecord.id },
     });
 
-    this.auditService.logAction(adminEmail, 'UPDATE_ROLE', 'User', { targetUserId: userId, newRole: roleName });
+    this.auditService.logAction(adminEmail, 'UPDATE_ROLE', 'User', {
+      targetUserId: userId,
+      newRole: roleName,
+    });
 
     return { message: `Successfully updated user role to ${roleName}` };
   }
 
   // ─── Change User Department ─────────────────────────────────
-  async updateUserDepartment(userId: string, departmentId: string | null, adminEmail: string) {
+  async updateUserDepartment(
+    userId: string,
+    departmentId: string | null,
+    adminEmail: string,
+  ) {
     if (departmentId === 'unassigned') {
       departmentId = null;
     }
@@ -334,9 +343,12 @@ export class LeaveService {
       where: { id: userId },
       data: { departmentId },
     });
-    
-    this.auditService.logAction(adminEmail, 'UPDATE_DEPARTMENT', 'User', { targetUserId: userId, newDepartment: departmentId });
-    
+
+    this.auditService.logAction(adminEmail, 'UPDATE_DEPARTMENT', 'User', {
+      targetUserId: userId,
+      newDepartment: departmentId,
+    });
+
     return { message: `Successfully updated user department` };
   }
 }

@@ -58,7 +58,7 @@ export class AuthController {
       secure: isProduction,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth',
+      path: isProduction ? '/api/auth' : '/auth', // <-- เปลี่ยน Path ให้ตรงกับ Nginx proxy
     });
   }
 
@@ -76,7 +76,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      path: '/auth',
+      path: isProduction ? '/api/auth' : '/auth',
     });
   }
 

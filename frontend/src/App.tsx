@@ -8,6 +8,7 @@ import PersonalLeaveDashboard from "./pages/PersonalLeaveDashboard";
 import DepartmentLeaveDashboard from "./pages/DepartmentLeaveDashboard";
 import LogLeaveDashboard from "./pages/LogLeaveDashboard";
 import LeaveManagement from "./pages/LeaveManagement";
+import SystemLogsDashboard from "./pages/SystemLogsDashboard";
 
 function App(): React.JSX.Element {
   return (
@@ -26,6 +27,7 @@ function App(): React.JSX.Element {
         <Route path="/dashboard/department" element={<DepartmentLeaveDashboard />} />
         <Route path="/dashboard/logs" element={<LogLeaveDashboard />} />
         <Route path="/leave-management" element={<LeaveManagement />} />
+        <Route path="/admin/system-logs" element={<SystemLogsDashboard />} />
       </Routes>
     </BrowserRouter>
     </>

@@ -88,7 +88,7 @@ const LeaveManagement: React.FC = () => {
   };
 
   const handleEdit = (leave: LeaveRequest) => {
-    if (leave.status !== "Pending") {
+    if (leave.status.toLowerCase() !== "pending") {
       toast.error("Can only edit Pending requests");
       return;
     }
@@ -382,7 +382,7 @@ const LeaveManagement: React.FC = () => {
               <table className="leave-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
+                    {isManagerOrAdmin && <th>Name</th>}
                     <th>Dates</th>
                     <th>Type</th>
                     <th>Reason</th>
@@ -394,7 +394,7 @@ const LeaveManagement: React.FC = () => {
                 <tbody>
                   {leaves.map((leave) => (
                     <tr key={leave.id}>
-                      <td>{leave.user?.name || user?.name}</td>
+                      {isManagerOrAdmin && <td>{leave.user?.name || user?.name}</td>}
                       <td>
                         {formatDate(leave.startDate)} -{" "}
                         {formatDate(leave.endDate)}
@@ -419,7 +419,7 @@ const LeaveManagement: React.FC = () => {
                             alignItems: "center",
                           }}
                         >
-                          {leave.status === "Pending" &&
+                          {leave.status.toLowerCase() === "pending" &&
                             (user?.role === "employee" ||
                               (isManagerOrAdmin &&
                                 leave.user?.email === user?.email)) && (
@@ -456,7 +456,7 @@ const LeaveManagement: React.FC = () => {
                                 </button>
                               </>
                             )}
-                          {isManagerOrAdmin && leave.status === "Pending" && (
+                          {isManagerOrAdmin && leave.status.toLowerCase() === "pending" && (
                             <>
                               <button
                                 onClick={() =>

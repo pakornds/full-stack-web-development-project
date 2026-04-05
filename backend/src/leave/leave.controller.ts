@@ -74,8 +74,12 @@ export class LeaveController {
   @Patch('users/:id/role')
   @UseGuards(RolesGuard)
   @Roles('admin', 'manager')
-  async updateUserRole(@Param('id') id: string, @Body('role') role: string) {
-    return this.leaveService.updateUserRole(id, role);
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body('role') role: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.leaveService.updateUserRole(id, role, req.user.email);
   }
 
   // ─── Change User Department (Admin / HR) ──────────────────
@@ -86,7 +90,8 @@ export class LeaveController {
   async updateUserDepartment(
     @Param('id') id: string,
     @Body('departmentId') departmentId: string | null,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.leaveService.updateUserDepartment(id, departmentId);
+    return this.leaveService.updateUserDepartment(id, departmentId, req.user.email);
   }
 }

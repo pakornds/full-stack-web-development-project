@@ -5,9 +5,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 @Injectable()
 export class LeaveService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService
+  ) {}
 
   // ─── Leave Types ──────────────────────────────────────────
 
@@ -301,7 +305,7 @@ export class LeaveService {
   }
 
   // ─── Change User Role ─────────────────────────────────────
-  async updateUserRole(userId: string, roleName: string) {
+  async updateUserRole(userId: string, roleName: string, adminEmail: string) {
     const roleRecord = await this.prisma.role.findUnique({
       where: { name: roleName },
     });
@@ -316,11 +320,13 @@ export class LeaveService {
       data: { roleId: roleRecord.id },
     });
 
+    this.auditService.logAction(adminEmail, 'UPDATE_ROLE', 'User', { targetUserId: userId, newRole: roleName });
+
     return { message: `Successfully updated user role to ${roleName}` };
   }
 
   // ─── Change User Department ─────────────────────────────────
-  async updateUserDepartment(userId: string, departmentId: string | null) {
+  async updateUserDepartment(userId: string, departmentId: string | null, adminEmail: string) {
     if (departmentId === 'unassigned') {
       departmentId = null;
     }
@@ -328,6 +334,9 @@ export class LeaveService {
       where: { id: userId },
       data: { departmentId },
     });
+    
+    this.auditService.logAction(adminEmail, 'UPDATE_DEPARTMENT', 'User', { targetUserId: userId, newDepartment: departmentId });
+    
     return { message: `Successfully updated user department` };
   }
 }

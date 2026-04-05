@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TwoFactorService } from './two-factor.service';
+import { AuditService } from '../audit/audit.service';
 import { VerifyTwoFactorDto, TwoFactorLoginDto } from './dto/two-factor.dto';
 import type { Request, Response } from 'express';
 
@@ -18,7 +19,10 @@ interface AuthenticatedRequest extends Request {
 
 @Controller('auth/2fa')
 export class TwoFactorController {
-  constructor(private readonly twoFactorService: TwoFactorService) {}
+  constructor(
+    private readonly twoFactorService: TwoFactorService,
+    private readonly auditService: AuditService
+  ) {}
 
   private setAuthCookies(
     res: Response,
@@ -50,6 +54,7 @@ export class TwoFactorController {
       await this.twoFactorService.verifyLogin(body.tempToken, body.code);
 
     this.setAuthCookies(res, accessToken, refreshToken);
+    this.auditService.logAction(user.email, 'LOGIN_2FA', 'Auth');
 
     return res
       .status(HttpStatus.OK)
@@ -68,7 +73,9 @@ export class TwoFactorController {
     @Req() req: AuthenticatedRequest,
     @Body() body: VerifyTwoFactorDto,
   ) {
-    return this.twoFactorService.enable(req.user.id, body.code);
+    const result = await this.twoFactorService.enable(req.user.id, body.code);
+    this.auditService.logAction(req.user.email, 'ENABLE_2FA', 'Auth');
+    return result;
   }
 
   @Post('disable')
@@ -77,6 +84,8 @@ export class TwoFactorController {
     @Req() req: AuthenticatedRequest,
     @Body() body: VerifyTwoFactorDto,
   ) {
-    return this.twoFactorService.disable(req.user.id, body.code);
+    const result = await this.twoFactorService.disable(req.user.id, body.code);
+    this.auditService.logAction(req.user.email, 'DISABLE_2FA', 'Auth');
+    return result;
   }
 }

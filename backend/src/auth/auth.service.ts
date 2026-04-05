@@ -279,8 +279,8 @@ export class AuthService {
     return this.tokenService.issueAuthTokens(user);
   }
 
-  async logout(refreshToken?: string | null): Promise<void> {
-    if (!refreshToken) return;
+  async logout(refreshToken?: string | null): Promise<{ email?: string }> {
+    if (!refreshToken) return {};
 
     let payload: AuthTokenPayload | null = null;
     try {
@@ -289,16 +289,16 @@ export class AuthService {
           refreshToken,
         );
     } catch {
-      return;
+      return {};
     }
 
-    if (!payload?.id) return;
+    if (!payload?.id) return {};
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.id },
     });
 
-    if (!user) return;
+    if (!user) return {};
 
     const isSessionActive = user.currentSessionId === payload.sessionId;
     const isRefreshValid =
@@ -308,6 +308,8 @@ export class AuthService {
     if (isSessionActive && isRefreshValid) {
       await this.tokenService.revokeSession(user.id);
     }
+
+    return { email: user.email };
   }
 
   async validateAccessPayload(payload: unknown) {
@@ -446,6 +448,6 @@ export class AuthService {
       },
     });
 
-    return { message: 'Password has been reset successfully.' };
+    return { message: 'Password has been reset successfully.', email: user.email };
   }
 }

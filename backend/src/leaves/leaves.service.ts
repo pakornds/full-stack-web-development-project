@@ -7,12 +7,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeaveDto, UpdateLeaveDto } from './dto/leave.dto';
 import sanitizeHtml from 'sanitize-html';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class LeavesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
-  async create(userId: string, data: CreateLeaveDto) {
+  async create(userId: string, userEmail: string, data: CreateLeaveDto) {
     const cleanReason = sanitizeHtml(data.reason, {
       allowedTags: [],
       allowedAttributes: {},
@@ -21,8 +25,7 @@ export class LeavesService {
     if (new Date(data.startDate) > new Date(data.endDate)) {
       throw new BadRequestException('Start date must be before end date');
     }
-
-    return this.prisma.leaveRequest.create({
+    const result = await this.prisma.leaveRequest.create({
       data: {
         userId,
         startDate: new Date(data.startDate),
@@ -32,6 +35,14 @@ export class LeavesService {
         status: 'Pending',
       },
     });
+    
+    this.auditService.logAction(userEmail, 'CREATE', 'LeaveRequest', {
+      leaveTypeId: data.leaveType,
+      startDate: data.startDate,
+      endDate: data.endDate
+    });
+
+    return result;
   }
 
   async findAll() {
@@ -85,7 +96,7 @@ export class LeavesService {
     });
   }
 
-  async update(id: string, userId: string, role: string, data: UpdateLeaveDto) {
+  async update(id: string, userId: string, userEmail: string, role: string, data: UpdateLeaveDto) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -108,7 +119,7 @@ export class LeavesService {
       throw new BadRequestException('Start date must be before end date');
     }
 
-    return this.prisma.leaveRequest.update({
+    const updated = await this.prisma.leaveRequest.update({
       where: { id },
       data: {
         startDate: new Date(data.startDate),
@@ -117,9 +128,13 @@ export class LeavesService {
         reason: cleanReason,
       },
     });
+
+    this.auditService.logAction(userEmail, 'UPDATE', 'LeaveRequest', { id, leaveTypeId: data.leaveType });
+
+    return updated;
   }
 
-  async remove(id: string, userId: string, role: string) {
+  async remove(id: string, userId: string, userEmail: string, role: string) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -133,10 +148,14 @@ export class LeavesService {
       throw new ForbiddenException('You can only delete your own requests');
     }
 
-    return this.prisma.leaveRequest.delete({ where: { id } });
+    const removed = await this.prisma.leaveRequest.delete({ where: { id } });
+
+    this.auditService.logAction(userEmail, 'DELETE', 'LeaveRequest', { id });
+
+    return removed;
   }
 
-  async updateStatus(id: string, status: string, approverId: string) {
+  async updateStatus(id: string, status: string, approverId: string, approverEmail: string) {
     const leaveItem = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -173,6 +192,8 @@ export class LeavesService {
           data: { usedDays: { increment: days } },
         });
       }
+
+      this.auditService.logAction(approverEmail, 'UPDATE_STATUS', 'LeaveRequest', { id, status: normalizedStatus });
 
       return updatedRequest;
     });

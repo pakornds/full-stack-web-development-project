@@ -24,7 +24,9 @@
    - กระบวนการ Login มีการตรวจจับ `failedLoginAttempts` หากมีการเข้าสู่ระบบล้มเหลวเกินจำนวนครั้งที่กำหนด (max threshold) ระบบจะทำการล็อกบัญชีนั้นชั่วคราว (Account Lockout)
 
 5. **Event Logging & Audit Trails**
-   - บันทึกพฤติกรรมการเรียกใช้งาน API และการเคลื่อนไหวในระบบ (เช่น Request method, IP, Duration) ผ่านโมเดล `EventLog` เพื่อผลด้านความปลอดภัยและ Audit ระบบในระยะยาว
+   - บันทึกพฤติกรรมการเรียกใช้งาน API และการเคลื่อนไหวในระบบที่สำคัญ (เช่น `LOGIN`, `REGISTER`, `CREATE_LEAVE`, `APPROVE_LEAVE`, เป็นต้น) โดยใช้ `AuditModule`
+   - ข้อมูล Audit จะถูกเขียนลงไฟล์ (File-based logging ที่ `logs/audit.log`) และสามารถเรียกดูได้ผ่านหน้า Dashboard เฉพาะสำหรับผู้ดูแลระบบ (`admin`)
+   - การบันทึกนี้ครอบคลุมทั้งระบบ Auth, 2FA, และการจัดการ Leave เพื่อให้มั่นใจเรื่องความปลอดภัยและการติดตาม (Traceability) อย่างเข้มงวด
 
 6. **Password Recovery (Forgot Password & Reset Password)**
    - รองรับกระบวนการกู้คืนรหัสผ่าน โดยสร้าง token อายุสั้น (short-lived reset token) และส่งผ่านบริการอีเมล (SMTP/Nodemailer) ไปยังผู้ใช้ เพื่อนำมาใช้ยืนยันและกำหนดรหัสผ่านใหม่ได้อย่างปลอดภัยใน endpoint `/auth/reset-password`

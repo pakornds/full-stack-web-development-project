@@ -8,9 +8,8 @@ import {
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import * as nodemailer from 'nodemailer';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
-import { createHash } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from './token.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -65,7 +64,7 @@ export class AuthService {
   }
 
   private checkAccountLock(lockedUntil: Date | null): void {
-    if (lockedUntil && lockedUntil > new Date()) {
+    if (lockedUntil?.getTime() > Date.now()) {
       throw new HttpException(
         this.getLockoutMessage(lockedUntil),
         HttpStatus.TOO_MANY_REQUESTS,
@@ -279,15 +278,15 @@ export class AuthService {
     }
 
     const isSessionActive = user.currentSessionId === payload.sessionId;
-    const isRefreshValid =
-      user.refreshTokenHash ===
-      this.tokenService.hashRefreshToken(refreshToken);
-    const isNotExpired =
-      user.refreshTokenExpiresAt != null &&
-      !Number.isNaN(user.refreshTokenExpiresAt.getTime()) &&
-      user.refreshTokenExpiresAt > new Date();
+      const isRefreshNotValid =
+        user.refreshTokenHash !==
+        this.tokenService.hashRefreshToken(refreshToken);
+      const isExpired =
+        user.refreshTokenExpiresAt == null ||
+        Number.isNaN(user.refreshTokenExpiresAt.getTime()) ||
+        user.refreshTokenExpiresAt <= new Date();
 
-    if (!isSessionActive || !isRefreshValid || !isNotExpired) {
+      if (!isSessionActive || isRefreshNotValid || isExpired) {
       await this.tokenService.revokeSession(user.id);
       throw new UnauthorizedException('Refresh token revoked or invalid');
     }

@@ -3,7 +3,6 @@ import {
   Get,
   UseGuards,
   Req,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuditService } from './audit.service';

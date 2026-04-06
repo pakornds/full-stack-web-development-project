@@ -1,6 +1,6 @@
-import { Injectable, OnModuleInit, Global } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export interface AuditLog {
   timestamp: string;

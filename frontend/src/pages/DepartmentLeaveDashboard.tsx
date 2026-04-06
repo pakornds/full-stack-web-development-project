@@ -74,7 +74,7 @@ const DepartmentLeaveDashboard: React.FC = () => {
       m.quotas.forEach(q => allLeaveTypes.add(q.leaveType));
     });
   });
-  const leaveTypeHeaders = Array.from(allLeaveTypes).sort();
+  const leaveTypeHeaders = Array.from(allLeaveTypes).sort((a, b) => a.localeCompare(b));
 
 
   const filteredDepartments = departments

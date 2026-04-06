@@ -85,8 +85,8 @@ const SystemLogsDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log, idx) => (
-                    <tr key={idx}>
+                  {logs.map((log) => (
+                    <tr key={log.timestamp + log.userEmail + log.action + log.resource}>
                       <td className="date-cell">{formatDateTime(log.timestamp)}</td>
                       <td>{log.userEmail}</td>
                       <td><span className="type-badge">{log.action}</span></td>

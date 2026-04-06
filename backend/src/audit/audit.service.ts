@@ -12,7 +12,7 @@ export interface AuditLog {
 
 @Injectable()
 export class AuditService implements OnModuleInit {
-  private logFilePath: string;
+  private logFilePath!: string; // Initialized in onModuleInit
 
   async onModuleInit() {
     const logDir = path.join(process.cwd(), 'logs');

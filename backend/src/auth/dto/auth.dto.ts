@@ -19,7 +19,7 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(15, { message: 'Password must be at least 15 characters long' })
-  @MaxLength(64, { message: 'Password must not exceed 64 characters' })
+  @MaxLength(64, { message: 'Password must not exceed 64 characters' }) // Limit input length to prevent ReDoS
   @Matches(/(?=.*[a-z])/, {
     message: 'Password must contain at least one lowercase letter',
   })
@@ -57,7 +57,7 @@ export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(15, { message: 'Password must be at least 15 characters long' })
-  @MaxLength(64, { message: 'Password must not exceed 64 characters' })
+  @MaxLength(64, { message: 'Password must not exceed 64 characters' }) // Limit input length to prevent ReDoS
   @Matches(/(?=.*[a-z])/, {
     message: 'Password must contain at least one lowercase letter',
   })

@@ -21,8 +21,11 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 
-try {
-  await bootstrap();
-} catch (error) {
-  console.error(error);
-}
+// NOTE: Using async IIFE instead of top-level await because the NestJS build toolchain transpiles to CommonJS, which does not support top-level await even if tsconfig is set to ES2023/NodeNext.
+(async () => {
+  try {
+    await bootstrap();
+  } catch (error) {
+    console.error(error);
+  }
+})();

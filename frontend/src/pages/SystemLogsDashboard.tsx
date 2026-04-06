@@ -85,6 +85,7 @@ const SystemLogsDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  {/* ensures each row has a stable, unique key */}
                   {logs.map((log) => (
                     <tr key={log.timestamp + log.userEmail + log.action + log.resource}>
                       <td className="date-cell">{formatDateTime(log.timestamp)}</td>

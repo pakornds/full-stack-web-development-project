@@ -64,7 +64,7 @@ export class AuthService {
   }
 
   private checkAccountLock(lockedUntil: Date | null): void {
-    if (lockedUntil?.getTime() > Date.now()) {
+    if (lockedUntil && lockedUntil.getTime() > Date.now()) {
       throw new HttpException(
         this.getLockoutMessage(lockedUntil),
         HttpStatus.TOO_MANY_REQUESTS,
@@ -384,12 +384,15 @@ export class AuthService {
       } as nodemailer.TransportOptions);
     }
 
+    // Always use HTTPS in reset links
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'https://leaveportal.cc';
+    const resetUrl = `${frontendUrl.replace('http://', 'https://')}/reset-password?token=${encodeURIComponent(token)}`;
     const info = (await transporter.sendMail({
       from: '"Leave Management System" <noreply@leave.com>',
       to: email,
-      subject: 'Password Reset Token',
-      text: `You requested a password reset. Your reset token is: ${token}\n\nEnter this token on the password reset page.`,
-      html: `<p>You requested a password reset.</p><p>Your reset token is: <strong>${token}</strong></p><p>Enter this token on the password reset page.</p>`,
+      subject: 'Password Reset',
+      text: `You requested a password reset. Click the link below to reset your password:\n${resetUrl}\n\nIf you did not request this, please ignore this email.`,
+      html: `<p>You requested a password reset.</p><p><a href="${resetUrl}">Reset your password</a></p><p>If you did not request this, please ignore this email.</p>`,
     })) as { messageId: string };
 
     console.log(

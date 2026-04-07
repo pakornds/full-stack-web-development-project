@@ -35,6 +35,7 @@ Comprehensive_API_Docs.md
 Auth_API_Sequence_Diagrams.md
 Leaves_API_Sequence_Diagrams.md
 Database_ER_Diagram.md
+<<<<<<< HEAD
 Leave_API_Sequence_Diagrams.md
 Deployment_Guide.md
 Security_Architecture_FAQ.md
@@ -45,3 +46,6 @@ issues.csv
 
 # Documentation
 Grading_Checklist_Report.md
+=======
+
+>>>>>>> parent of 328ac75 (chore: Untrack and ignore issues.csv)

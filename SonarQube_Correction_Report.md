@@ -77,6 +77,8 @@ import { createHash } from 'node:crypto';
 
 ## รายงานหลังการแก้ไข (After Correction Report)
 
+![alt text](image.png)
+
 | หมวดหมู่ | จำนวนปัญหาที่แก้ไข | สถานะ |
 |---|---|---|
 | CODE_SMELL | 69 | แก้ไขแล้วทั้งหมด |
